@@ -56,7 +56,7 @@ export default function AdminOrdersPage() {
 
   const filtered = orderList.filter((o) => {
     const matchSearch =
-      o.id.toLowerCase().includes(search.toLowerCase()) ||
+      o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
       o.customerName.toLowerCase().includes(search.toLowerCase()) ||
       o.customerEmail.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "all" || o.status === statusFilter;
@@ -69,7 +69,8 @@ export default function AdminOrdersPage() {
       setOrderList((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
       );
-      toast.success(`Order ${orderId} updated to ${newStatus}`);
+      const order = orderList.find((o) => o.id === orderId);
+      toast.success(`Order ${order?.orderNumber || orderId} updated to ${newStatus}`);
     } catch {
       toast.error("Failed to update order status");
     }
@@ -125,7 +126,7 @@ export default function AdminOrdersPage() {
       </div>
 
       {/* Orders Table */}
-      <div className="rounded-2xl border bg-card overflow-hidden">
+      <div className="rounded-2xl border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -162,7 +163,7 @@ export default function AdminOrdersPage() {
                   transition={{ delay: index * 0.02 }}
                   className="hover:bg-muted/30 transition-colors"
                 >
-                  <td className="px-5 py-3 text-sm font-medium">{order.id}</td>
+                  <td className="px-5 py-3 text-sm font-medium">{order.orderNumber}</td>
                   <td className="px-5 py-3">
                     <div>
                       <p className="text-sm font-medium">{order.customerName}</p>
@@ -178,14 +179,14 @@ export default function AdminOrdersPage() {
                       value={order.status}
                       onValueChange={(v) => handleUpdateStatus(order.id, v as Order["status"])}
                     >
-                      <SelectTrigger className="h-7 w-[130px] border-0 px-2 rounded-lg">
+                      <SelectTrigger className="h-8 w-[140px] rounded-lg cursor-pointer">
                         <Badge className={`${statusColors[order.status]} border-0 capitalize text-xs`}>
                           {order.status}
                         </Badge>
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent position="popper" className="z-50">
                         {allStatuses.map((s) => (
-                          <SelectItem key={s} value={s} className="capitalize">
+                          <SelectItem key={s} value={s} className="capitalize cursor-pointer">
                             {s}
                           </SelectItem>
                         ))}
@@ -208,7 +209,7 @@ export default function AdminOrdersPage() {
                       </DialogTrigger>
                       <DialogContent className="max-w-lg">
                         <DialogHeader>
-                          <DialogTitle>Order {order.id}</DialogTitle>
+                          <DialogTitle>Order {order.orderNumber}</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4 mt-2">
                           <div className="space-y-1 text-sm">

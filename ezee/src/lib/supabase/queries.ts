@@ -54,7 +54,8 @@ function mapBanner(row: Record<string, unknown>): BannerSlide {
 
 function mapOrder(row: Record<string, unknown>): Order {
   return {
-    id: (row.order_number as string) || (row.id as string),
+    id: row.id as string,
+    orderNumber: (row.order_number as string) || (row.id as string),
     userId: (row.user_id as string) || "",
     customerName: (row.customer_name as string) || "",
     customerEmail: (row.customer_email as string) || "",
@@ -461,16 +462,11 @@ export async function createOrder(order: {
 }
 
 export async function updateOrderStatus(id: string, status: Order["status"]) {
-  // id here is the UUID, not order_number
   const { error } = await supabase
     .from("orders")
     .update({ status })
-    .eq("order_number", id);
-  if (error) {
-    // try by UUID
-    const { error: err2 } = await supabase.from("orders").update({ status }).eq("id", id);
-    if (err2) throw err2;
-  }
+    .eq("id", id);
+  if (error) throw error;
 }
 
 // ============================================

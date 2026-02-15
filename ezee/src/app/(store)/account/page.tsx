@@ -139,7 +139,7 @@ export default function AccountPage() {
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-sm font-semibold">{order.id}</span>
+                        <span className="text-sm font-semibold">{order.orderNumber}</span>
                         <p className="text-xs text-muted-foreground">
                           {new Date(order.createdAt).toLocaleDateString("en-IN", {
                             year: "numeric",

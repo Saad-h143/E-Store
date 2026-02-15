@@ -229,7 +229,7 @@ export default function AdminDashboard() {
                   ))
                 : recentOrders.map((order) => (
                     <tr key={order.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="px-5 py-3.5 text-sm font-medium">{order.id}</td>
+                      <td className="px-5 py-3.5 text-sm font-medium">{order.orderNumber}</td>
                       <td className="px-5 py-3.5">
                         <div>
                           <p className="text-sm font-medium">{order.customerName}</p>

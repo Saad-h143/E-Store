@@ -3,6 +3,7 @@ import { Order } from "@/types";
 export const orders: Order[] = [
   {
     id: "ORD-001",
+    orderNumber: "ORD-001",
     userId: "user-1",
     customerName: "Rahul Sharma",
     customerEmail: "rahul@example.com",
@@ -23,6 +24,7 @@ export const orders: Order[] = [
   },
   {
     id: "ORD-002",
+    orderNumber: "ORD-002",
     userId: "user-2",
     customerName: "Priya Patel",
     customerEmail: "priya@example.com",
@@ -50,6 +52,7 @@ export const orders: Order[] = [
   },
   {
     id: "ORD-003",
+    orderNumber: "ORD-003",
     userId: "user-3",
     customerName: "Amit Kumar",
     customerEmail: "amit@example.com",
@@ -70,6 +73,7 @@ export const orders: Order[] = [
   },
   {
     id: "ORD-004",
+    orderNumber: "ORD-004",
     userId: "user-4",
     customerName: "Sneha Reddy",
     customerEmail: "sneha@example.com",
@@ -90,6 +94,7 @@ export const orders: Order[] = [
   },
   {
     id: "ORD-005",
+    orderNumber: "ORD-005",
     userId: "user-5",
     customerName: "Vikram Singh",
     customerEmail: "vikram@example.com",
@@ -117,6 +122,7 @@ export const orders: Order[] = [
   },
   {
     id: "ORD-006",
+    orderNumber: "ORD-006",
     userId: "user-1",
     customerName: "Rahul Sharma",
     customerEmail: "rahul@example.com",
