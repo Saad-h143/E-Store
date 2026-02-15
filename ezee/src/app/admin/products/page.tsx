@@ -1,0 +1,264 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { Plus, Search, Edit, Trash2, Eye, EyeOff, Package } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { products as allProducts } from "@/data/products";
+import { categories } from "@/data/categories";
+import { formatPrice } from "@/store/cart-store";
+import { toast } from "sonner";
+
+export default function AdminProductsPage() {
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [productList, setProductList] = useState(allProducts);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const filtered = productList.filter((p) => {
+    const matchSearch = p.title.toLowerCase().includes(search.toLowerCase());
+    const matchCategory = categoryFilter === "all" || p.categoryId === categoryFilter;
+    return matchSearch && matchCategory;
+  });
+
+  const toggleActive = (id: string) => {
+    setProductList((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, active: !p.active } : p))
+    );
+    toast.success("Product status updated");
+  };
+
+  const deleteProduct = (id: string) => {
+    setProductList((prev) => prev.filter((p) => p.id !== id));
+    setDeleteId(null);
+    toast.success("Product deleted");
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Products</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Manage your product inventory
+          </p>
+        </div>
+        <Link href="/admin/products/new">
+          <Button className="rounded-xl">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Product
+          </Button>
+        </Link>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search products..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10 h-10 rounded-xl"
+          />
+        </div>
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="w-[180px] h-10 rounded-xl">
+            <SelectValue placeholder="All Categories" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {categories.map((cat) => (
+              <SelectItem key={cat.id} value={cat.id}>
+                {cat.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Product Table */}
+      <div className="rounded-2xl border bg-card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b text-left">
+                <th className="px-5 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Product
+                </th>
+                <th className="px-5 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Price
+                </th>
+                <th className="px-5 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Discount
+                </th>
+                <th className="px-5 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Stock
+                </th>
+                <th className="px-5 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-5 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {filtered.map((product, index) => {
+                const cat = categories.find((c) => c.id === product.categoryId);
+                return (
+                  <motion.tr
+                    key={product.id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: index * 0.02 }}
+                    className="hover:bg-muted/30 transition-colors"
+                  >
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-10 w-10 rounded-lg overflow-hidden shrink-0">
+                          <Image
+                            src={product.images[0]}
+                            alt={product.title}
+                            fill
+                            className="object-cover"
+                            sizes="40px"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate max-w-[200px]">
+                            {product.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{cat?.name}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3 text-sm font-medium">
+                      {formatPrice(product.price)}
+                    </td>
+                    <td className="px-5 py-3">
+                      {product.discount > 0 ? (
+                        <Badge className="bg-red-500/10 text-red-600 dark:text-red-400 border-0 text-xs">
+                          {product.discount}% OFF
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3">
+                      <Badge
+                        variant={product.stock === 0 ? "destructive" : product.stock <= 5 ? "secondary" : "secondary"}
+                        className={`text-xs ${product.stock <= 5 && product.stock > 0 ? "bg-amber-500/10 text-amber-600 border-0" : ""}`}
+                      >
+                        {product.stock === 0 ? "Out of Stock" : `${product.stock} units`}
+                      </Badge>
+                    </td>
+                    <td className="px-5 py-3">
+                      <Badge
+                        className={`text-xs border-0 ${
+                          product.active
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            : "bg-red-500/10 text-red-600 dark:text-red-400"
+                        }`}
+                      >
+                        {product.active ? "Active" : "Inactive"}
+                      </Badge>
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => toggleActive(product.id)}
+                          title={product.active ? "Deactivate" : "Activate"}
+                        >
+                          {product.active ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Link href={`/admin/products/new?edit=${product.id}`}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Dialog
+                          open={deleteId === product.id}
+                          onOpenChange={(open) => !open && setDeleteId(null)}
+                        >
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              onClick={() => setDeleteId(product.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Delete Product</DialogTitle>
+                              <DialogDescription>
+                                Are you sure you want to delete &quot;{product.title}&quot;? This
+                                action cannot be undone.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter>
+                              <Button variant="outline" onClick={() => setDeleteId(null)}>
+                                Cancel
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                onClick={() => deleteProduct(product.id)}
+                              >
+                                Delete
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </td>
+                  </motion.tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {filtered.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <Package className="h-12 w-12 mx-auto mb-3 opacity-30" />
+            <p>No products found</p>
+          </div>
+        )}
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        Showing {filtered.length} of {productList.length} products
+      </p>
+    </div>
+  );
+}
