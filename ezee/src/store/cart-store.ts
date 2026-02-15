@@ -81,9 +81,9 @@ export function getDiscountedPrice(product: Product): number {
 }
 
 export function formatPrice(price: number): string {
-  return new Intl.NumberFormat("en-IN", {
+  return new Intl.NumberFormat("de-DE", {
     style: "currency",
-    currency: "INR",
+    currency: "EUR",
     maximumFractionDigits: 0,
   }).format(price);
 }

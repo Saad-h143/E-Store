@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Smartphone, Loader2, Shield } from "lucide-react";
+import { Eye, EyeOff, Smartphone, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, loginAsAdmin } = useAuthStore();
+  const { login } = useAuthStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -27,18 +27,20 @@ export default function LoginPage() {
       return;
     }
     setLoading(true);
-    const success = await login(email, password);
+    const result = await login(email, password);
     setLoading(false);
 
-    if (success) {
+    if (result.success) {
       toast.success("Welcome back!");
-      if (email === "admin@ezee.com") {
+      // Check if admin
+      const { user } = useAuthStore.getState();
+      if (user?.role === "admin") {
         router.push("/admin");
       } else {
         router.push("/");
       }
     } else {
-      toast.error("Login failed. Please try again.");
+      toast.error(result.error || "Login failed. Please try again.");
     }
   };
 
@@ -101,11 +103,7 @@ export default function LoginPage() {
                   className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
@@ -122,37 +120,9 @@ export default function LoginPage() {
 
           <Separator className="my-6" />
 
-          {/* Quick Login Buttons */}
-          <div className="space-y-3">
-            <p className="text-xs text-center text-muted-foreground">Quick demo login</p>
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
-                className="rounded-xl h-10 text-xs"
-                onClick={async () => {
-                  setLoading(true);
-                  await login("customer@ezee.com", "demo");
-                  setLoading(false);
-                  toast.success("Logged in as Customer!");
-                  router.push("/");
-                }}
-              >
-                Customer Login
-              </Button>
-              <Button
-                variant="outline"
-                className="rounded-xl h-10 text-xs"
-                onClick={() => {
-                  loginAsAdmin();
-                  toast.success("Logged in as Admin!");
-                  router.push("/admin");
-                }}
-              >
-                <Shield className="mr-1.5 h-3.5 w-3.5" />
-                Admin Login
-              </Button>
-            </div>
-          </div>
+          <p className="text-xs text-center text-muted-foreground mb-3">
+            Use your registered email and password to sign in.
+          </p>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             Don&apos;t have an account?{" "}

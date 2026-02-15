@@ -32,7 +32,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Input } from "@/components/ui/input";
 import { useCartStore } from "@/store/cart-store";
 import { useAuthStore } from "@/store/auth-store";
-import { categories } from "@/data/categories";
+import { getCategories } from "@/lib/supabase/queries";
+import type { Category } from "@/types";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -47,6 +48,7 @@ export function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const itemCount = useCartStore((s) => s.getItemCount());
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -55,6 +57,7 @@ export function Navbar() {
     setMounted(true);
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
+    getCategories().then(setCategories);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 

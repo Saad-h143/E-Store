@@ -1,29 +1,76 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, AlertCircle } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useCartStore, getDiscountedPrice, formatPrice } from "@/store/cart-store";
 import { useAuthStore } from "@/store/auth-store";
+import { createOrder } from "@/lib/supabase/queries";
 import { toast } from "sonner";
 
 export default function CartPage() {
+  const router = useRouter();
   const { items, removeItem, updateQuantity, clearCart, getTotal } = useCartStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
+  const [placingOrder, setPlacingOrder] = useState(false);
+  const [shippingInfo, setShippingInfo] = useState({
+    phone: "",
+    address: "",
+  });
   const total = getTotal();
   const shipping = total > 25000 ? 0 : 499;
   const grandTotal = total + shipping;
 
-  const handleCheckout = () => {
-    if (!isAuthenticated) {
+  const handleCheckout = async () => {
+    if (!isAuthenticated || !user) {
       toast.error("Please login to place an order.");
       return;
     }
-    toast.success("Order placed successfully! (Mock)");
-    clearCart();
+
+    if (!shippingInfo.address.trim()) {
+      toast.error("Please enter a shipping address.");
+      return;
+    }
+    if (!shippingInfo.phone.trim()) {
+      toast.error("Please enter a phone number.");
+      return;
+    }
+
+    setPlacingOrder(true);
+    try {
+      const orderItems = items.map((item) => ({
+        productId: item.product.id,
+        title: item.product.title,
+        price: getDiscountedPrice(item.product),
+        quantity: item.quantity,
+        image: item.product.images[0] || "",
+      }));
+
+      await createOrder({
+        userId: user.id,
+        customerName: user.name,
+        customerEmail: user.email,
+        customerPhone: shippingInfo.phone,
+        items: orderItems,
+        total: grandTotal,
+        shippingAddress: shippingInfo.address,
+      });
+
+      clearCart();
+      toast.success("Order placed successfully!");
+      router.push("/account");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to place order";
+      toast.error(message);
+    }
+    setPlacingOrder(false);
   };
 
   if (items.length === 0) {
@@ -206,6 +253,34 @@ export default function CartPage() {
               <span className="text-primary">{formatPrice(grandTotal)}</span>
             </div>
 
+            {isAuthenticated && user && (
+              <div className="space-y-3">
+                <Separator />
+                <h3 className="font-semibold text-sm">Shipping Details</h3>
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-xs">Phone Number *</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={shippingInfo.phone}
+                    onChange={(e) => setShippingInfo((p) => ({ ...p, phone: e.target.value }))}
+                    placeholder="e.g., 9876543210"
+                    className="h-9 rounded-xl text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address" className="text-xs">Shipping Address *</Label>
+                  <Input
+                    id="address"
+                    value={shippingInfo.address}
+                    onChange={(e) => setShippingInfo((p) => ({ ...p, address: e.target.value }))}
+                    placeholder="Full shipping address"
+                    className="h-9 rounded-xl text-sm"
+                  />
+                </div>
+              </div>
+            )}
+
             {!isAuthenticated && (
               <div className="flex items-center gap-2 text-muted-foreground bg-muted/50 px-3 py-2.5 rounded-xl border border-dashed text-xs">
                 <AlertCircle className="h-3.5 w-3.5 shrink-0" />
@@ -222,10 +297,19 @@ export default function CartPage() {
             <Button
               size="lg"
               className="w-full h-12 rounded-xl font-semibold"
-              disabled={!isAuthenticated}
+              disabled={!isAuthenticated || placingOrder}
               onClick={handleCheckout}
             >
-              {isAuthenticated ? "Place Order" : "Login to Checkout"}
+              {placingOrder ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Placing Order...
+                </>
+              ) : isAuthenticated ? (
+                "Place Order"
+              ) : (
+                "Login to Checkout"
+              )}
             </Button>
           </div>
         </div>

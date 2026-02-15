@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Search, Eye } from "lucide-react";
+import { Search, Eye, Loader2, Package } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,10 +21,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { orders as allOrders } from "@/data/orders";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getOrders, updateOrderStatus } from "@/lib/supabase/queries";
 import { formatPrice } from "@/store/cart-store";
 import { toast } from "sonner";
-import { Order } from "@/types";
+import type { Order } from "@/types";
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
@@ -40,7 +41,18 @@ const allStatuses = ["pending", "confirmed", "processing", "shipped", "delivered
 export default function AdminOrdersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [orderList, setOrderList] = useState(allOrders);
+  const [orderList, setOrderList] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadOrders = useCallback(async () => {
+    const data = await getOrders();
+    setOrderList(data);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
 
   const filtered = orderList.filter((o) => {
     const matchSearch =
@@ -51,12 +63,33 @@ export default function AdminOrdersPage() {
     return matchSearch && matchStatus;
   });
 
-  const updateStatus = (orderId: string, newStatus: Order["status"]) => {
-    setOrderList((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
-    );
-    toast.success(`Order ${orderId} updated to ${newStatus}`);
+  const handleUpdateStatus = async (orderId: string, newStatus: Order["status"]) => {
+    try {
+      await updateOrderStatus(orderId, newStatus);
+      setOrderList((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
+      );
+      toast.success(`Order ${orderId} updated to ${newStatus}`);
+    } catch {
+      toast.error("Failed to update order status");
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Orders</h1>
+          <p className="text-muted-foreground text-sm mt-1">Manage customer orders</p>
+        </div>
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -143,7 +176,7 @@ export default function AdminOrdersPage() {
                   <td className="px-5 py-3">
                     <Select
                       value={order.status}
-                      onValueChange={(v) => updateStatus(order.id, v as Order["status"])}
+                      onValueChange={(v) => handleUpdateStatus(order.id, v as Order["status"])}
                     >
                       <SelectTrigger className="h-7 w-[130px] border-0 px-2 rounded-lg">
                         <Badge className={`${statusColors[order.status]} border-0 capitalize text-xs`}>
@@ -222,6 +255,7 @@ export default function AdminOrdersPage() {
 
         {filtered.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
+            <Package className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p>No orders found</p>
           </div>
         )}

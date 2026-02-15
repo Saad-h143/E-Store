@@ -37,14 +37,14 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
-    const success = await register(name, email, password);
+    const result = await register(name, email, password);
     setLoading(false);
 
-    if (success) {
-      toast.success("Account created successfully!");
+    if (result.success) {
+      toast.success("Account created successfully! You can now login.");
       router.push("/");
     } else {
-      toast.error("Registration failed. Please try again.");
+      toast.error(result.error || "Registration failed. Please try again.");
     }
   };
 

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Plus, Search, Edit, Trash2, Eye, EyeOff, Package } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Eye, EyeOff, Package, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -24,16 +24,44 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { products as allProducts } from "@/data/products";
-import { categories } from "@/data/categories";
+import {
+  getAllProducts,
+  getCategories,
+  updateProduct,
+  deleteProduct as deleteProductFromDb,
+} from "@/lib/supabase/queries";
+import type { Product, Category } from "@/types";
 import { formatPrice } from "@/store/cart-store";
 import { toast } from "sonner";
 
 export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [productList, setProductList] = useState(allProducts);
+  const [productList, setProductList] = useState<Product[]>([]);
+  const [categoryList, setCategoryList] = useState<Category[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [mutating, setMutating] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const [products, categories] = await Promise.all([
+        getAllProducts(),
+        getCategories(),
+      ]);
+      setProductList(products);
+      setCategoryList(categories);
+    } catch (error) {
+      console.error("Failed to fetch data:", error);
+      toast.error("Failed to load products");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const filtered = productList.filter((p) => {
     const matchSearch = p.title.toLowerCase().includes(search.toLowerCase());
@@ -41,18 +69,42 @@ export default function AdminProductsPage() {
     return matchSearch && matchCategory;
   });
 
-  const toggleActive = (id: string) => {
-    setProductList((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, active: !p.active } : p))
-    );
-    toast.success("Product status updated");
+  const toggleActive = async (id: string, currentActive: boolean) => {
+    setMutating(id);
+    try {
+      await updateProduct(id, { active: !currentActive });
+      await fetchData();
+      toast.success("Product status updated");
+    } catch (error) {
+      console.error("Failed to update product:", error);
+      toast.error("Failed to update product status");
+    } finally {
+      setMutating(null);
+    }
   };
 
-  const deleteProduct = (id: string) => {
-    setProductList((prev) => prev.filter((p) => p.id !== id));
-    setDeleteId(null);
-    toast.success("Product deleted");
+  const handleDeleteProduct = async (id: string) => {
+    setMutating(id);
+    try {
+      await deleteProductFromDb(id);
+      setDeleteId(null);
+      await fetchData();
+      toast.success("Product deleted");
+    } catch (error) {
+      console.error("Failed to delete product:", error);
+      toast.error("Failed to delete product");
+    } finally {
+      setMutating(null);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -88,7 +140,7 @@ export default function AdminProductsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            {categories.map((cat) => (
+            {categoryList.map((cat) => (
               <SelectItem key={cat.id} value={cat.id}>
                 {cat.name}
               </SelectItem>
@@ -125,7 +177,7 @@ export default function AdminProductsPage() {
             </thead>
             <tbody className="divide-y">
               {filtered.map((product, index) => {
-                const cat = categories.find((c) => c.id === product.categoryId);
+                const cat = categoryList.find((c) => c.id === product.categoryId);
                 return (
                   <motion.tr
                     key={product.id}
@@ -190,10 +242,13 @@ export default function AdminProductsPage() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => toggleActive(product.id)}
+                          disabled={mutating === product.id}
+                          onClick={() => toggleActive(product.id, product.active)}
                           title={product.active ? "Deactivate" : "Activate"}
                         >
-                          {product.active ? (
+                          {mutating === product.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : product.active ? (
                             <EyeOff className="h-4 w-4" />
                           ) : (
                             <Eye className="h-4 w-4" />
@@ -232,9 +287,17 @@ export default function AdminProductsPage() {
                               </Button>
                               <Button
                                 variant="destructive"
-                                onClick={() => deleteProduct(product.id)}
+                                disabled={mutating === product.id}
+                                onClick={() => handleDeleteProduct(product.id)}
                               >
-                                Delete
+                                {mutating === product.id ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Deleting...
+                                  </>
+                                ) : (
+                                  "Delete"
+                                )}
                               </Button>
                             </DialogFooter>
                           </DialogContent>

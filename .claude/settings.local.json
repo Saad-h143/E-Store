@@ -8,7 +8,9 @@
       "Bash(npx shadcn@latest add button card input label select badge separator sheet dialog dropdown-menu table tabs textarea avatar checkbox slider switch toast skeleton form popover command -y)",
       "Bash(npx shadcn@latest add:*)",
       "Bash(wc:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm ls:*)"
     ]
   }
 }

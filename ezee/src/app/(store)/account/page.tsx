@@ -1,15 +1,18 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { User, Mail, Phone, Calendar, Shield, Package, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/store/auth-store";
-import { orders } from "@/data/orders";
+import { getUserOrders } from "@/lib/supabase/queries";
 import { formatPrice } from "@/store/cart-store";
 import Link from "next/link";
+import type { Order } from "@/types";
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
@@ -23,6 +26,19 @@ const statusColors: Record<string, string> = {
 export default function AccountPage() {
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const [userOrders, setUserOrders] = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadOrders() {
+      if (user) {
+        const data = await getUserOrders(user.id);
+        setUserOrders(data);
+      }
+      setOrdersLoading(false);
+    }
+    loadOrders();
+  }, [user]);
 
   if (!isAuthenticated || !user) {
     return (
@@ -35,8 +51,6 @@ export default function AccountPage() {
       </div>
     );
   }
-
-  const userOrders = orders.filter((o) => o.userId === user.id || user.role === "customer");
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">

@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Plus, Edit, Trash2, ImageIcon } from "lucide-react";
+import { Plus, Edit, Trash2, ImageIcon, Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -17,15 +19,28 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { banners as initialBanners } from "@/data/banners";
+import {
+  getAllBanners,
+  createBanner,
+  updateBanner,
+  deleteBanner,
+  uploadImage,
+} from "@/lib/supabase/queries";
 import { toast } from "sonner";
-import { BannerSlide } from "@/types";
+import type { BannerSlide } from "@/types";
+
+type BannerWithMeta = BannerSlide & { active: boolean; sortOrder: number };
 
 export default function AdminBannersPage() {
-  const [bannerList, setBannerList] = useState(initialBanners);
-  const [editBanner, setEditBanner] = useState<BannerSlide | null>(null);
+  const [bannerList, setBannerList] = useState<BannerWithMeta[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [editBanner, setEditBanner] = useState<BannerWithMeta | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
   const [newBanner, setNewBanner] = useState({
     title: "",
     subtitle: "",
@@ -35,34 +50,124 @@ export default function AdminBannersPage() {
     ctaLink: "/shop",
   });
 
-  const handleAdd = () => {
+  const loadBanners = useCallback(async () => {
+    const data = await getAllBanners();
+    setBannerList(data);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadBanners();
+  }, [loadBanners]);
+
+  const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    target: "new" | "edit"
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const url = await uploadImage(file, "banners");
+      if (target === "new") {
+        setNewBanner((prev) => ({ ...prev, image: url }));
+      } else if (editBanner) {
+        setEditBanner({ ...editBanner, image: url });
+      }
+      toast.success("Image uploaded!");
+    } catch {
+      toast.error("Failed to upload image");
+    }
+    setUploadingImage(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (editFileInputRef.current) editFileInputRef.current.value = "";
+  };
+
+  const handleAdd = async () => {
     if (!newBanner.title) {
       toast.error("Please enter a banner title");
       return;
     }
-    const banner: BannerSlide = {
-      id: `ban-${Date.now()}`,
-      ...newBanner,
-      gradient: "from-slate-950 via-zinc-900 to-neutral-950",
-    };
-    setBannerList((prev) => [...prev, banner]);
-    setNewBanner({ title: "", subtitle: "", description: "", image: "", ctaText: "Shop Now", ctaLink: "/shop" });
-    setAddOpen(false);
-    toast.success("Banner added");
+    setSaving(true);
+    try {
+      const created = await createBanner({
+        title: newBanner.title,
+        subtitle: newBanner.subtitle,
+        description: newBanner.description,
+        image: newBanner.image,
+        ctaText: newBanner.ctaText,
+        ctaLink: newBanner.ctaLink,
+      });
+      setBannerList((prev) => [...prev, { ...created, active: true, sortOrder: prev.length }]);
+      setNewBanner({ title: "", subtitle: "", description: "", image: "", ctaText: "Shop Now", ctaLink: "/shop" });
+      setAddOpen(false);
+      toast.success("Banner added");
+    } catch {
+      toast.error("Failed to create banner");
+    }
+    setSaving(false);
   };
 
-  const handleDelete = (id: string) => {
-    setBannerList((prev) => prev.filter((b) => b.id !== id));
-    setDeleteId(null);
-    toast.success("Banner deleted");
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteBanner(id);
+      setBannerList((prev) => prev.filter((b) => b.id !== id));
+      setDeleteId(null);
+      toast.success("Banner deleted");
+    } catch {
+      toast.error("Failed to delete banner");
+    }
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!editBanner) return;
-    setBannerList((prev) => prev.map((b) => (b.id === editBanner.id ? editBanner : b)));
-    setEditBanner(null);
-    toast.success("Banner updated");
+    setSaving(true);
+    try {
+      await updateBanner(editBanner.id, {
+        title: editBanner.title,
+        subtitle: editBanner.subtitle,
+        description: editBanner.description,
+        image: editBanner.image,
+        ctaText: editBanner.ctaText,
+        ctaLink: editBanner.ctaLink,
+        active: editBanner.active,
+      });
+      setBannerList((prev) => prev.map((b) => (b.id === editBanner.id ? editBanner : b)));
+      setEditBanner(null);
+      toast.success("Banner updated");
+    } catch {
+      toast.error("Failed to update banner");
+    }
+    setSaving(false);
   };
+
+  const toggleBannerActive = async (banner: BannerWithMeta) => {
+    try {
+      await updateBanner(banner.id, { active: !banner.active });
+      setBannerList((prev) =>
+        prev.map((b) => (b.id === banner.id ? { ...b, active: !b.active } : b))
+      );
+      toast.success(banner.active ? "Banner deactivated" : "Banner activated");
+    } catch {
+      toast.error("Failed to toggle banner");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Banners</h1>
+          <p className="text-muted-foreground text-sm mt-1">Manage hero carousel banners</p>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-64 w-full rounded-2xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -113,13 +218,31 @@ export default function AdminBannersPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Image URL</Label>
-                <Input
-                  value={newBanner.image}
-                  onChange={(e) => setNewBanner({ ...newBanner, image: e.target.value })}
-                  placeholder="https://..."
-                  className="rounded-xl"
+                <Label>Image</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e, "new")}
+                  className="hidden"
                 />
+                <div className="flex gap-2">
+                  <Input
+                    value={newBanner.image}
+                    onChange={(e) => setNewBanner({ ...newBanner, image: e.target.value })}
+                    placeholder="Image URL or upload"
+                    className="rounded-xl flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-xl"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingImage}
+                  >
+                    {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
@@ -144,7 +267,10 @@ export default function AdminBannersPage() {
               <Button variant="outline" onClick={() => setAddOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleAdd}>Add Banner</Button>
+              <Button onClick={handleAdd} disabled={saving}>
+                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Add Banner
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -161,13 +287,15 @@ export default function AdminBannersPage() {
             className="rounded-2xl border bg-card overflow-hidden"
           >
             <div className={`relative h-48 bg-gradient-to-br ${banner.gradient}`}>
-              <Image
-                src={banner.image}
-                alt={banner.title}
-                fill
-                className="object-cover opacity-40 mix-blend-luminosity"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-              />
+              {banner.image ? (
+                <Image
+                  src={banner.image}
+                  alt={banner.title}
+                  fill
+                  className="object-cover opacity-40 mix-blend-luminosity"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                />
+              ) : null}
               <div className="absolute inset-0 flex items-center p-6">
                 <div>
                   <p className="text-xs text-white/60 uppercase tracking-wider font-medium">
@@ -179,13 +307,26 @@ export default function AdminBannersPage() {
                   </p>
                 </div>
               </div>
+              {!banner.active && (
+                <div className="absolute top-2 right-2">
+                  <Badge variant="secondary" className="text-xs bg-black/50 text-white">
+                    Inactive
+                  </Badge>
+                </div>
+              )}
             </div>
             <div className="p-4 flex items-center justify-between">
-              <div className="text-sm">
-                <Badge variant="secondary" className="text-xs mr-2">
-                  {banner.ctaText}
-                </Badge>
-                <span className="text-muted-foreground text-xs">{banner.ctaLink}</span>
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={banner.active}
+                  onCheckedChange={() => toggleBannerActive(banner)}
+                />
+                <div className="text-sm">
+                  <Badge variant="secondary" className="text-xs mr-2">
+                    {banner.ctaText}
+                  </Badge>
+                  <span className="text-muted-foreground text-xs">{banner.ctaLink}</span>
+                </div>
               </div>
               <div className="flex gap-2">
                 <Dialog
@@ -239,14 +380,32 @@ export default function AdminBannersPage() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Image URL</Label>
-                          <Input
-                            value={editBanner.image}
-                            onChange={(e) =>
-                              setEditBanner({ ...editBanner, image: e.target.value })
-                            }
-                            className="rounded-xl"
+                          <Label>Image</Label>
+                          <input
+                            ref={editFileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageUpload(e, "edit")}
+                            className="hidden"
                           />
+                          <div className="flex gap-2">
+                            <Input
+                              value={editBanner.image}
+                              onChange={(e) =>
+                                setEditBanner({ ...editBanner, image: e.target.value })
+                              }
+                              className="rounded-xl flex-1"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="rounded-xl"
+                              onClick={() => editFileInputRef.current?.click()}
+                              disabled={uploadingImage}
+                            >
+                              {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                            </Button>
+                          </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div className="space-y-2">
@@ -276,7 +435,10 @@ export default function AdminBannersPage() {
                       <Button variant="outline" onClick={() => setEditBanner(null)}>
                         Cancel
                       </Button>
-                      <Button onClick={handleUpdate}>Save Changes</Button>
+                      <Button onClick={handleUpdate} disabled={saving}>
+                        {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                        Save Changes
+                      </Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>

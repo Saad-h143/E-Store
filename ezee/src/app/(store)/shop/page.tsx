@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useState, useMemo } from "react";
+import { Suspense, useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { Search, SlidersHorizontal, X, ChevronDown } from "lucide-react";
+import { motion } from "framer-motion";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,9 +25,10 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { ProductCard } from "@/components/product/product-card";
-import { products } from "@/data/products";
-import { categories } from "@/data/categories";
-import { formatPrice, getDiscountedPrice } from "@/store/cart-store";
+import { ProductGridSkeleton } from "@/components/common/product-skeleton";
+import { getProducts, getCategories } from "@/lib/supabase/queries";
+import { formatPrice } from "@/store/cart-store";
+import type { Product, Category } from "@/types";
 
 function ShopContent() {
   const searchParams = useSearchParams();
@@ -45,58 +46,81 @@ function ShopContent() {
   const [dealsOnly, setDealsOnly] = useState(initialDeals);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const filtered = useMemo(() => {
-    let result = products.filter((p) => p.active);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
 
-    if (search) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.title.toLowerCase().includes(q) ||
-          p.description.toLowerCase().includes(q)
-      );
+  // Debounce timer ref for search input
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
+
+  // Debounce search input
+  useEffect(() => {
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
     }
+    searchTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+      }
+    };
+  }, [search]);
 
-    if (selectedCategories.length > 0) {
-      result = result.filter((p) => {
-        const cat = categories.find((c) => c.id === p.categoryId);
-        return cat && selectedCategories.includes(cat.slug);
-      });
+  // Load categories once on mount
+  useEffect(() => {
+    let cancelled = false;
+    async function loadCategories() {
+      setCategoriesLoading(true);
+      const data = await getCategories();
+      if (!cancelled) {
+        setCategories(data);
+        setCategoriesLoading(false);
+      }
     }
+    loadCategories();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-    result = result.filter(
-      (p) => p.price >= priceRange[0] && p.price <= priceRange[1]
-    );
+  // Load products whenever filters change
+  const loadProducts = useCallback(async () => {
+    setLoading(true);
 
-    if (dealsOnly) {
-      result = result.filter((p) => p.discount > 0);
-    }
+    // When a single category is selected, let Supabase filter it.
+    // When multiple are selected, we fetch all and filter client-side.
+    const singleCategory =
+      selectedCategories.length === 1 ? selectedCategories[0] : undefined;
 
-    switch (sortBy) {
-      case "price-low":
-        result.sort((a, b) => getDiscountedPrice(a) - getDiscountedPrice(b));
-        break;
-      case "price-high":
-        result.sort((a, b) => getDiscountedPrice(b) - getDiscountedPrice(a));
-        break;
-      case "newest":
-        result.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-        break;
-      case "best-selling":
-        result.sort((a, b) => (a.bestSeller === b.bestSeller ? 0 : a.bestSeller ? -1 : 1));
-        break;
-      case "discount":
-        result.sort((a, b) => b.discount - a.discount);
-        break;
-      default:
-        result.sort((a, b) => (a.featured === b.featured ? 0 : a.featured ? -1 : 1));
-    }
+    const data = await getProducts({
+      search: debouncedSearch || undefined,
+      category: singleCategory,
+      sort: sortBy,
+      deals: dealsOnly || undefined,
+      minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
+      maxPrice: priceRange[1] < 200000 ? priceRange[1] : undefined,
+    });
 
-    return result;
-  }, [search, selectedCategories, priceRange, sortBy, dealsOnly]);
+    setProducts(data);
+    setLoading(false);
+  }, [debouncedSearch, selectedCategories, sortBy, dealsOnly, priceRange]);
+
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
+  // Client-side filtering for multi-category selection
+  const filtered =
+    selectedCategories.length > 1
+      ? products.filter((p) => {
+          const cat = categories.find((c) => c.id === p.categoryId);
+          return cat && selectedCategories.includes(cat.slug);
+        })
+      : products;
 
   const toggleCategory = (slug: string) => {
     setSelectedCategories((prev) =>
@@ -123,23 +147,30 @@ function ShopContent() {
       <div>
         <h4 className="text-sm font-semibold mb-3">Brand</h4>
         <div className="space-y-2.5">
-          {categories.map((cat) => (
-            <label
-              key={cat.id}
-              className="flex items-center gap-2.5 cursor-pointer group"
-            >
-              <Checkbox
-                checked={selectedCategories.includes(cat.slug)}
-                onCheckedChange={() => toggleCategory(cat.slug)}
-              />
-              <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-                {cat.name}
-              </span>
-              <Badge variant="secondary" className="ml-auto text-xs">
-                {cat.productCount}
-              </Badge>
-            </label>
-          ))}
+          {categoriesLoading
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-2.5">
+                  <div className="h-4 w-4 rounded bg-muted animate-pulse" />
+                  <div className="h-3 w-24 rounded bg-muted animate-pulse" />
+                </div>
+              ))
+            : categories.map((cat) => (
+                <label
+                  key={cat.id}
+                  className="flex items-center gap-2.5 cursor-pointer group"
+                >
+                  <Checkbox
+                    checked={selectedCategories.includes(cat.slug)}
+                    onCheckedChange={() => toggleCategory(cat.slug)}
+                  />
+                  <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                    {cat.name}
+                  </span>
+                  <Badge variant="secondary" className="ml-auto text-xs">
+                    {cat.productCount}
+                  </Badge>
+                </label>
+              ))}
         </div>
       </div>
 
@@ -300,11 +331,15 @@ function ShopContent() {
         <div className="flex-1">
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-muted-foreground">
-              {filtered.length} product{filtered.length !== 1 ? "s" : ""} found
+              {loading
+                ? "Loading products..."
+                : `${filtered.length} product${filtered.length !== 1 ? "s" : ""} found`}
             </p>
           </div>
 
-          {filtered.length > 0 ? (
+          {loading ? (
+            <ProductGridSkeleton count={8} />
+          ) : filtered.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
               {filtered.map((product, index) => (
                 <ProductCard key={product.id} product={product} index={index} />
@@ -333,8 +368,6 @@ function ShopContent() {
     </div>
   );
 }
-
-import { ProductGridSkeleton } from "@/components/common/product-skeleton";
 
 export default function ShopPage() {
   return (
