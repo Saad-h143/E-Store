@@ -14,7 +14,8 @@
       "WebFetch(domain:github.com)",
       "Bash(uipro init --ai claude)",
       "mcp__claude_ai_Supabase__list_projects",
-      "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py \"contact page ecommerce form location map\" --design-system -p \"Ezee Store\")"
+      "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py \"contact page ecommerce form location map\" --design-system -p \"Ezee Store\")",
+      "Bash(npx tsc --noEmit --pretty)"
     ]
   }
 }

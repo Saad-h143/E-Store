@@ -160,19 +160,23 @@ function NewProductContent() {
         ),
       };
 
-      if (editId) {
-        await updateProduct(editId, productData);
-        toast.success("Product updated successfully!");
-      } else {
-        await createProduct(productData);
-        toast.success("Product created successfully!");
-      }
+      const savePromise = editId
+        ? updateProduct(editId, productData)
+        : createProduct(productData);
+
+      // Navigate immediately for fast UX
       router.push("/admin/products");
+
+      toast.promise(savePromise, {
+        loading: editId ? "Updating product..." : "Creating product...",
+        success: editId ? "Product updated!" : "Product created!",
+        error: "Failed to save product",
+      });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Operation failed";
       toast.error(message);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const updateField = (field: string, value: string | boolean) => {

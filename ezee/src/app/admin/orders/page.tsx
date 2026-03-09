@@ -80,14 +80,23 @@ export default function AdminOrdersPage() {
   });
 
   const handleUpdateStatus = async (orderId: string, newStatus: Order["status"]) => {
+    // Optimistic — update UI first
+    const prevStatus = orderList.find((o) => o.id === orderId)?.status;
+    setOrderList((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
+    );
+    const order = orderList.find((o) => o.id === orderId);
+    toast.success(`Order ${order?.orderNumber || orderId} updated to ${newStatus}`);
+
     try {
       await updateOrderStatus(orderId, newStatus);
-      setOrderList((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
-      );
-      const order = orderList.find((o) => o.id === orderId);
-      toast.success(`Order ${order?.orderNumber || orderId} updated to ${newStatus}`);
     } catch {
+      // Revert on failure
+      if (prevStatus) {
+        setOrderList((prev) =>
+          prev.map((o) => (o.id === orderId ? { ...o, status: prevStatus } : o))
+        );
+      }
       toast.error("Failed to update order status");
     }
   };
