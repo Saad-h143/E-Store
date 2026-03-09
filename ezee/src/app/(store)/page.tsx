@@ -44,10 +44,10 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="space-y-20 py-8">
-      {/* Banner — full-width edge-to-edge */}
+    <div className="space-y-20">
+      {/* Banner — full-width, behind transparent navbar */}
       {loading ? (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-24">
           <BannerSkeleton />
         </div>
       ) : (
@@ -55,7 +55,7 @@ export default function HomePage() {
       )}
 
       {/* All other sections in container */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-20 pb-8">
         <FeaturesStrip />
 
         <section>

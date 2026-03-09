@@ -25,6 +25,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   getAllProducts,
   getCategories,
   updateProduct,
@@ -40,6 +50,7 @@ export default function AdminProductsPage() {
   const [productList, setProductList] = useState<Product[]>([]);
   const [categoryList, setCategoryList] = useState<Category[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [pendingToggle, setPendingToggle] = useState<{ id: string; title: string; currentActive: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
   const [mutating, setMutating] = useState<string | null>(null);
 
@@ -243,7 +254,7 @@ export default function AdminProductsPage() {
                           size="icon"
                           className="h-8 w-8"
                           disabled={mutating === product.id}
-                          onClick={() => toggleActive(product.id, product.active)}
+                          onClick={() => setPendingToggle({ id: product.id, title: product.title, currentActive: product.active })}
                           title={product.active ? "Deactivate" : "Activate"}
                         >
                           {mutating === product.id ? (
@@ -322,6 +333,41 @@ export default function AdminProductsPage() {
       <p className="text-xs text-muted-foreground">
         Showing {filtered.length} of {productList.length} products
       </p>
+
+      {/* Activate/Deactivate Confirmation */}
+      <AlertDialog
+        open={pendingToggle !== null}
+        onOpenChange={(open) => { if (!open) setPendingToggle(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingToggle?.currentActive ? "Deactivate Product?" : "Activate Product?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingToggle?.currentActive
+                ? `"${pendingToggle?.title}" will be hidden from customers and no longer available for purchase.`
+                : `"${pendingToggle?.title}" will be visible to customers and available for purchase.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingToggle(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className={pendingToggle?.currentActive ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground" : "bg-emerald-600 hover:bg-emerald-700 text-white"}
+              onClick={() => {
+                if (pendingToggle) {
+                  toggleActive(pendingToggle.id, pendingToggle.currentActive);
+                  setPendingToggle(null);
+                }
+              }}
+            >
+              {pendingToggle?.currentActive ? "Deactivate" : "Activate"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

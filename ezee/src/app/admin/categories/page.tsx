@@ -23,10 +23,14 @@ import {
   createCategory,
   updateCategory,
   deleteCategory,
+  getSubcategories,
+  createSubcategory,
+  updateSubcategory,
+  deleteSubcategory,
   uploadImage,
 } from "@/lib/supabase/queries";
 import { toast } from "sonner";
-import type { Category } from "@/types";
+import type { Category, Subcategory } from "@/types";
 
 export default function AdminCategoriesPage() {
   const [categoryList, setCategoryList] = useState<Category[]>([]);
@@ -40,11 +44,30 @@ export default function AdminCategoriesPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Subcategory state
+  const [subcategoriesMap, setSubcategoriesMap] = useState<Record<string, Subcategory[]>>({});
+  const [addSubOpen, setAddSubOpen] = useState<string | null>(null);
+  const [editSub, setEditSub] = useState<Subcategory | null>(null);
+  const [deleteSubId, setDeleteSubId] = useState<string | null>(null);
+  const [newSub, setNewSub] = useState({ name: "", description: "", image: "" });
+
+  const loadSubcategoriesForAll = useCallback(async (cats: Category[]) => {
+    const map: Record<string, Subcategory[]> = {};
+    await Promise.all(
+      cats.map(async (cat) => {
+        const subs = await getSubcategories(cat.id);
+        map[cat.id] = subs;
+      })
+    );
+    setSubcategoriesMap(map);
+  }, []);
+
   const loadCategories = useCallback(async () => {
     const data = await getCategories();
     setCategoryList(data);
+    await loadSubcategoriesForAll(data);
     setLoading(false);
-  }, []);
+  }, [loadSubcategoriesForAll]);
 
   useEffect(() => {
     loadCategories();
@@ -134,6 +157,73 @@ export default function AdminCategoriesPage() {
       toast.error("Failed to update category");
     }
     setSaving(false);
+  };
+
+  const handleAddSub = async (categoryId: string) => {
+    if (!newSub.name) {
+      toast.error("Please enter a subcategory name");
+      return;
+    }
+    setSaving(true);
+    try {
+      const slug = newSub.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const sub = await createSubcategory({
+        categoryId,
+        name: newSub.name,
+        slug,
+        description: newSub.description,
+        image: newSub.image,
+      });
+      setSubcategoriesMap((prev) => ({
+        ...prev,
+        [categoryId]: [...(prev[categoryId] || []), sub],
+      }));
+      setNewSub({ name: "", description: "", image: "" });
+      setAddSubOpen(null);
+      toast.success("Subcategory added");
+    } catch {
+      toast.error("Failed to create subcategory");
+    }
+    setSaving(false);
+  };
+
+  const handleUpdateSub = async () => {
+    if (!editSub) return;
+    setSaving(true);
+    try {
+      const slug = editSub.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      await updateSubcategory(editSub.id, {
+        name: editSub.name,
+        slug,
+        description: editSub.description,
+        image: editSub.image,
+      });
+      setSubcategoriesMap((prev) => ({
+        ...prev,
+        [editSub.categoryId]: (prev[editSub.categoryId] || []).map((s) =>
+          s.id === editSub.id ? { ...editSub, slug } : s
+        ),
+      }));
+      setEditSub(null);
+      toast.success("Subcategory updated");
+    } catch {
+      toast.error("Failed to update subcategory");
+    }
+    setSaving(false);
+  };
+
+  const handleDeleteSub = async (sub: Subcategory) => {
+    try {
+      await deleteSubcategory(sub.id);
+      setSubcategoriesMap((prev) => ({
+        ...prev,
+        [sub.categoryId]: (prev[sub.categoryId] || []).filter((s) => s.id !== sub.id),
+      }));
+      setDeleteSubId(null);
+      toast.success("Subcategory deleted");
+    } catch {
+      toast.error("Failed to delete subcategory");
+    }
   };
 
   if (loading) {
@@ -382,6 +472,111 @@ export default function AdminCategoriesPage() {
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
+              </div>
+
+              {/* Subcategories Section */}
+              <div className="mt-3 pt-3 border-t border-border/50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Subcategories</span>
+                  <Dialog open={addSubOpen === category.id} onOpenChange={(open) => { if (!open) { setAddSubOpen(null); setNewSub({ name: "", description: "", image: "" }); } }}>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setAddSubOpen(category.id)}>
+                        <Plus className="h-3 w-3 mr-1" /> Add
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add Subcategory to {category.name}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 mt-2">
+                        <div className="space-y-2">
+                          <Label>Name</Label>
+                          <Input value={newSub.name} onChange={(e) => setNewSub({ ...newSub, name: e.target.value })} placeholder="e.g., Budget Phones" className="rounded-xl" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Description</Label>
+                          <Input value={newSub.description} onChange={(e) => setNewSub({ ...newSub, description: e.target.value })} placeholder="Short description" className="rounded-xl" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Image URL</Label>
+                          <Input value={newSub.image} onChange={(e) => setNewSub({ ...newSub, image: e.target.value })} placeholder="Image URL (optional)" className="rounded-xl" />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => { setAddSubOpen(null); setNewSub({ name: "", description: "", image: "" }); }}>Cancel</Button>
+                        <Button onClick={() => handleAddSub(category.id)} disabled={saving}>
+                          {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                          Add Subcategory
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                {(subcategoriesMap[category.id] || []).length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No subcategories</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {(subcategoriesMap[category.id] || []).map((sub) => (
+                      <div key={sub.id} className="flex items-center justify-between text-sm bg-muted/50 rounded-lg px-2.5 py-1.5">
+                        <span className="truncate">{sub.name}</span>
+                        <div className="flex gap-1 shrink-0">
+                          <Dialog open={editSub?.id === sub.id} onOpenChange={(open) => !open && setEditSub(null)}>
+                            <DialogTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setEditSub({ ...sub })}>
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Edit Subcategory</DialogTitle>
+                              </DialogHeader>
+                              {editSub && (
+                                <div className="space-y-4 mt-2">
+                                  <div className="space-y-2">
+                                    <Label>Name</Label>
+                                    <Input value={editSub.name} onChange={(e) => setEditSub({ ...editSub, name: e.target.value })} className="rounded-xl" />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label>Description</Label>
+                                    <Input value={editSub.description} onChange={(e) => setEditSub({ ...editSub, description: e.target.value })} className="rounded-xl" />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Label>Image URL</Label>
+                                    <Input value={editSub.image} onChange={(e) => setEditSub({ ...editSub, image: e.target.value })} className="rounded-xl" />
+                                  </div>
+                                </div>
+                              )}
+                              <DialogFooter>
+                                <Button variant="outline" onClick={() => setEditSub(null)}>Cancel</Button>
+                                <Button onClick={handleUpdateSub} disabled={saving}>
+                                  {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                  Save
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                          <Dialog open={deleteSubId === sub.id} onOpenChange={(open) => !open && setDeleteSubId(null)}>
+                            <DialogTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive hover:text-destructive" onClick={() => setDeleteSubId(sub.id)}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Delete Subcategory</DialogTitle>
+                                <DialogDescription>Are you sure you want to delete &quot;{sub.name}&quot;?</DialogDescription>
+                              </DialogHeader>
+                              <DialogFooter>
+                                <Button variant="outline" onClick={() => setDeleteSubId(null)}>Cancel</Button>
+                                <Button variant="destructive" onClick={() => handleDeleteSub(sub)}>Delete</Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>

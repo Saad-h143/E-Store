@@ -26,9 +26,9 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductGridSkeleton } from "@/components/common/product-skeleton";
-import { getProducts, getCategories } from "@/lib/supabase/queries";
+import { getProducts, getCategories, getSubcategories } from "@/lib/supabase/queries";
 import { formatPrice } from "@/store/cart-store";
-import type { Product, Category } from "@/types";
+import type { Product, Category, Subcategory } from "@/types";
 
 function ShopContent() {
   const searchParams = useSearchParams();
@@ -36,6 +36,7 @@ function ShopContent() {
   const initialSearch = searchParams.get("search") || "";
   const initialSort = searchParams.get("sort") || "";
   const initialDeals = searchParams.get("deals") === "true";
+  const initialSubcategory = searchParams.get("subcategory") || "";
 
   const [search, setSearch] = useState(initialSearch);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
@@ -45,6 +46,9 @@ function ShopContent() {
   const [sortBy, setSortBy] = useState(initialSort || "featured");
   const [dealsOnly, setDealsOnly] = useState(initialDeals);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  const [selectedSubcategory, setSelectedSubcategory] = useState(initialSubcategory);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -87,6 +91,21 @@ function ShopContent() {
     };
   }, []);
 
+  // Load subcategories when a single category is selected
+  useEffect(() => {
+    if (selectedCategories.length === 1) {
+      const cat = categories.find((c) => c.slug === selectedCategories[0]);
+      if (cat) {
+        getSubcategories(cat.id).then(setSubcategories);
+      } else {
+        setSubcategories([]);
+      }
+    } else {
+      setSubcategories([]);
+      setSelectedSubcategory("");
+    }
+  }, [selectedCategories, categories]);
+
   // Load products whenever filters change
   const loadProducts = useCallback(async () => {
     setLoading(true);
@@ -113,14 +132,18 @@ function ShopContent() {
     loadProducts();
   }, [loadProducts]);
 
-  // Client-side filtering for multi-category selection
-  const filtered =
-    selectedCategories.length > 1
-      ? products.filter((p) => {
-          const cat = categories.find((c) => c.id === p.categoryId);
-          return cat && selectedCategories.includes(cat.slug);
-        })
-      : products;
+  // Client-side filtering for multi-category selection and subcategory
+  const filtered = products.filter((p) => {
+    if (selectedCategories.length > 1) {
+      const cat = categories.find((c) => c.id === p.categoryId);
+      if (!cat || !selectedCategories.includes(cat.slug)) return false;
+    }
+    if (selectedSubcategory) {
+      const sub = subcategories.find((s) => s.slug === selectedSubcategory);
+      if (sub && p.subcategoryId !== sub.id) return false;
+    }
+    return true;
+  });
 
   const toggleCategory = (slug: string) => {
     setSelectedCategories((prev) =>
@@ -131,6 +154,7 @@ function ShopContent() {
   const clearFilters = () => {
     setSearch("");
     setSelectedCategories([]);
+    setSelectedSubcategory("");
     setPriceRange([0, 200000]);
     setSortBy("featured");
     setDealsOnly(false);
@@ -138,6 +162,7 @@ function ShopContent() {
 
   const activeFilterCount =
     selectedCategories.length +
+    (selectedSubcategory ? 1 : 0) +
     (dealsOnly ? 1 : 0) +
     (priceRange[0] > 0 || priceRange[1] < 200000 ? 1 : 0);
 
@@ -173,6 +198,38 @@ function ShopContent() {
               ))}
         </div>
       </div>
+
+      {/* Subcategories */}
+      {subcategories.length > 0 && (
+        <>
+          <Separator />
+          <div>
+            <h4 className="text-sm font-semibold mb-3">Subcategory</h4>
+            <div className="space-y-2.5">
+              <label className="flex items-center gap-2.5 cursor-pointer group">
+                <Checkbox
+                  checked={!selectedSubcategory}
+                  onCheckedChange={() => setSelectedSubcategory("")}
+                />
+                <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                  All
+                </span>
+              </label>
+              {subcategories.map((sub) => (
+                <label key={sub.id} className="flex items-center gap-2.5 cursor-pointer group">
+                  <Checkbox
+                    checked={selectedSubcategory === sub.slug}
+                    onCheckedChange={() => setSelectedSubcategory(selectedSubcategory === sub.slug ? "" : sub.slug)}
+                  />
+                  <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                    {sub.name}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       <Separator />
 
@@ -289,7 +346,7 @@ function ShopContent() {
       </div>
 
       {/* Active Filters */}
-      {(selectedCategories.length > 0 || dealsOnly) && (
+      {(selectedCategories.length > 0 || selectedSubcategory || dealsOnly) && (
         <div className="flex flex-wrap gap-2 mb-4">
           {selectedCategories.map((slug) => {
             const cat = categories.find((c) => c.slug === slug);
@@ -305,6 +362,16 @@ function ShopContent() {
               </Badge>
             );
           })}
+          {selectedSubcategory && (
+            <Badge
+              variant="secondary"
+              className="pl-3 pr-1 py-1 rounded-lg cursor-pointer"
+              onClick={() => setSelectedSubcategory("")}
+            >
+              {subcategories.find((s) => s.slug === selectedSubcategory)?.name || selectedSubcategory}
+              <X className="h-3 w-3 ml-1" />
+            </Badge>
+          )}
           {dealsOnly && (
             <Badge
               variant="secondary"

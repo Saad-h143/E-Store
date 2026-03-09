@@ -10,6 +10,7 @@ export interface Product {
   active: boolean;
   images: string[];
   categoryId: string;
+  subcategoryId?: string;
   featured: boolean;
   bestSeller: boolean;
   newArrival: boolean;
@@ -19,6 +20,16 @@ export interface Product {
 
 export interface Category {
   id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image: string;
+  productCount: number;
+}
+
+export interface Subcategory {
+  id: string;
+  categoryId: string;
   name: string;
   slug: string;
   description: string;

@@ -1,5 +1,9 @@
 import { createClient } from "./client";
-import type { Product, Category, BannerSlide, Order, UserProfile } from "@/types";
+import type { Product, Category, Subcategory, BannerSlide, Order, UserProfile } from "@/types";
+import {
+  cacheGet, cacheSet, cacheInvalidateProducts, cacheInvalidateCategories,
+  CACHE_KEYS, DEFAULT_TTL, ADMIN_TTL,
+} from "@/lib/cache";
 
 const supabase = createClient();
 
@@ -20,6 +24,7 @@ function mapProduct(row: Record<string, unknown>): Product {
     active: row.active as boolean,
     images: (row.images as string[]) || [],
     categoryId: (row.category_id as string) || "",
+    subcategoryId: (row.subcategory_id as string) || "",
     featured: row.featured as boolean,
     bestSeller: row.best_seller as boolean,
     newArrival: row.new_arrival as boolean,
@@ -31,6 +36,18 @@ function mapProduct(row: Record<string, unknown>): Product {
 function mapCategory(row: Record<string, unknown>): Category {
   return {
     id: row.id as string,
+    name: row.name as string,
+    slug: row.slug as string,
+    description: (row.description as string) || "",
+    image: (row.image as string) || "",
+    productCount: Number(row.product_count) || 0,
+  };
+}
+
+function mapSubcategory(row: Record<string, unknown>): Subcategory {
+  return {
+    id: row.id as string,
+    categoryId: (row.category_id as string) || "",
     name: row.name as string,
     slug: row.slug as string,
     description: (row.description as string) || "",
@@ -69,8 +86,29 @@ function mapOrder(row: Record<string, unknown>): Order {
 }
 
 // ============================================
-// PRODUCTS
+// PRODUCTS — cached
 // ============================================
+
+/** Fetch all active products (cached). Used by store pages. */
+async function fetchActiveProducts(): Promise<Product[]> {
+  const cached = cacheGet<Product[]>(CACHE_KEYS.PRODUCTS_ACTIVE);
+  if (cached) return cached;
+
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("active", true)
+    .order("featured", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching products:", error);
+    return [];
+  }
+  const products = (data || []).map(mapProduct);
+  cacheSet(CACHE_KEYS.PRODUCTS_ACTIVE, products, DEFAULT_TTL);
+  return products;
+}
 
 export async function getProducts(filters?: {
   search?: string;
@@ -84,73 +122,68 @@ export async function getProducts(filters?: {
   newArrival?: boolean;
   limit?: number;
 }): Promise<Product[]> {
-  let query = supabase.from("products").select("*").eq("active", true);
+  // Fetch all active products once, then filter in-memory
+  let products = await fetchActiveProducts();
 
   if (filters?.search) {
-    query = query.ilike("title", `%${filters.search}%`);
+    const q = filters.search.toLowerCase();
+    products = products.filter((p) => p.title.toLowerCase().includes(q));
   }
 
   if (filters?.category) {
-    // Get category ID from slug
-    const { data: cat } = await supabase
-      .from("categories")
-      .select("id")
-      .eq("slug", filters.category)
-      .single();
+    // Resolve slug to ID via cached categories
+    const cats = await getCategories();
+    const cat = cats.find((c) => c.slug === filters.category);
     if (cat) {
-      query = query.eq("category_id", cat.id);
+      products = products.filter((p) => p.categoryId === cat.id);
     }
   }
 
   if (filters?.deals) {
-    query = query.gt("discount", 0);
+    products = products.filter((p) => p.discount > 0);
   }
 
   if (filters?.minPrice !== undefined) {
-    query = query.gte("price", filters.minPrice);
+    products = products.filter((p) => p.price >= filters.minPrice!);
   }
   if (filters?.maxPrice !== undefined && filters.maxPrice < 200000) {
-    query = query.lte("price", filters.maxPrice);
+    products = products.filter((p) => p.price <= filters.maxPrice!);
   }
 
-  if (filters?.featured) query = query.eq("featured", true);
-  if (filters?.bestSeller) query = query.eq("best_seller", true);
-  if (filters?.newArrival) query = query.eq("new_arrival", true);
+  if (filters?.featured) products = products.filter((p) => p.featured);
+  if (filters?.bestSeller) products = products.filter((p) => p.bestSeller);
+  if (filters?.newArrival) products = products.filter((p) => p.newArrival);
 
   // Sorting
   switch (filters?.sort) {
     case "price-low":
-      query = query.order("price", { ascending: true });
+      products.sort((a, b) => a.price - b.price);
       break;
     case "price-high":
-      query = query.order("price", { ascending: false });
+      products.sort((a, b) => b.price - a.price);
       break;
     case "newest":
-      query = query.order("created_at", { ascending: false });
+      products.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       break;
     case "best-selling":
-      query = query.order("best_seller", { ascending: false }).order("created_at", { ascending: false });
+      products.sort((a, b) => (b.bestSeller ? 1 : 0) - (a.bestSeller ? 1 : 0));
       break;
     case "discount":
-      query = query.order("discount", { ascending: false });
+      products.sort((a, b) => b.discount - a.discount);
       break;
-    default:
-      query = query.order("featured", { ascending: false }).order("created_at", { ascending: false });
   }
 
   if (filters?.limit) {
-    query = query.limit(filters.limit);
+    products = products.slice(0, filters.limit);
   }
 
-  const { data, error } = await query;
-  if (error) {
-    console.error("Error fetching products:", error);
-    return [];
-  }
-  return (data || []).map(mapProduct);
+  return products;
 }
 
 export async function getAllProducts(): Promise<Product[]> {
+  const cached = cacheGet<Product[]>(CACHE_KEYS.PRODUCTS_ALL);
+  if (cached) return cached;
+
   const { data, error } = await supabase
     .from("products")
     .select("*")
@@ -159,27 +192,51 @@ export async function getAllProducts(): Promise<Product[]> {
     console.error("Error fetching all products:", error);
     return [];
   }
-  return (data || []).map(mapProduct);
+  const products = (data || []).map(mapProduct);
+  cacheSet(CACHE_KEYS.PRODUCTS_ALL, products, ADMIN_TTL);
+  return products;
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
+  const cacheKey = CACHE_KEYS.PRODUCT_BY_SLUG(slug);
+  const cached = cacheGet<Product>(cacheKey);
+  if (cached) return cached;
+
+  // Try finding from active products cache first
+  const activeProducts = cacheGet<Product[]>(CACHE_KEYS.PRODUCTS_ACTIVE);
+  if (activeProducts) {
+    const found = activeProducts.find((p) => p.slug === slug);
+    if (found) {
+      cacheSet(cacheKey, found, DEFAULT_TTL);
+      return found;
+    }
+  }
+
   const { data, error } = await supabase
     .from("products")
     .select("*")
     .eq("slug", slug)
     .single();
   if (error || !data) return null;
-  return mapProduct(data);
+  const product = mapProduct(data);
+  cacheSet(cacheKey, product, DEFAULT_TTL);
+  return product;
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
+  const cacheKey = CACHE_KEYS.PRODUCT_BY_ID(id);
+  const cached = cacheGet<Product>(cacheKey);
+  if (cached) return cached;
+
   const { data, error } = await supabase
     .from("products")
     .select("*")
     .eq("id", id)
     .single();
   if (error || !data) return null;
-  return mapProduct(data);
+  const product = mapProduct(data);
+  cacheSet(cacheKey, product, DEFAULT_TTL);
+  return product;
 }
 
 export async function createProduct(product: {
@@ -193,6 +250,7 @@ export async function createProduct(product: {
   active: boolean;
   images: string[];
   categoryId: string;
+  subcategoryId?: string;
   featured: boolean;
   bestSeller: boolean;
   newArrival: boolean;
@@ -211,6 +269,7 @@ export async function createProduct(product: {
       active: product.active,
       images: product.images,
       category_id: product.categoryId || null,
+      subcategory_id: product.subcategoryId || null,
       featured: product.featured,
       best_seller: product.bestSeller,
       new_arrival: product.newArrival,
@@ -219,6 +278,7 @@ export async function createProduct(product: {
     .select()
     .single();
   if (error) throw error;
+  cacheInvalidateProducts();
   return mapProduct(data);
 }
 
@@ -235,6 +295,7 @@ export async function updateProduct(
     active: boolean;
     images: string[];
     categoryId: string;
+    subcategoryId: string;
     featured: boolean;
     bestSeller: boolean;
     newArrival: boolean;
@@ -252,6 +313,7 @@ export async function updateProduct(
   if (updates.active !== undefined) dbUpdates.active = updates.active;
   if (updates.images !== undefined) dbUpdates.images = updates.images;
   if (updates.categoryId !== undefined) dbUpdates.category_id = updates.categoryId || null;
+  if (updates.subcategoryId !== undefined) dbUpdates.subcategory_id = updates.subcategoryId || null;
   if (updates.featured !== undefined) dbUpdates.featured = updates.featured;
   if (updates.bestSeller !== undefined) dbUpdates.best_seller = updates.bestSeller;
   if (updates.newArrival !== undefined) dbUpdates.new_arrival = updates.newArrival;
@@ -264,19 +326,24 @@ export async function updateProduct(
     .select()
     .single();
   if (error) throw error;
+  cacheInvalidateProducts();
   return mapProduct(data);
 }
 
 export async function deleteProduct(id: string) {
   const { error } = await supabase.from("products").delete().eq("id", id);
   if (error) throw error;
+  cacheInvalidateProducts();
 }
 
 // ============================================
-// CATEGORIES
+// CATEGORIES — cached
 // ============================================
 
 export async function getCategories(): Promise<Category[]> {
+  const cached = cacheGet<Category[]>(CACHE_KEYS.CATEGORIES);
+  if (cached) return cached;
+
   const { data, error } = await supabase
     .from("categories")
     .select("*")
@@ -285,7 +352,9 @@ export async function getCategories(): Promise<Category[]> {
     console.error("Error fetching categories:", error);
     return [];
   }
-  return (data || []).map(mapCategory);
+  const categories = (data || []).map(mapCategory);
+  cacheSet(CACHE_KEYS.CATEGORIES, categories, DEFAULT_TTL);
+  return categories;
 }
 
 export async function createCategory(category: { name: string; slug: string; description: string; image: string }) {
@@ -295,6 +364,7 @@ export async function createCategory(category: { name: string; slug: string; des
     .select()
     .single();
   if (error) throw error;
+  cacheInvalidateCategories();
   return mapCategory(data);
 }
 
@@ -306,19 +376,71 @@ export async function updateCategory(id: string, updates: Partial<{ name: string
     .select()
     .single();
   if (error) throw error;
+  cacheInvalidateCategories();
   return mapCategory(data);
 }
 
 export async function deleteCategory(id: string) {
   const { error } = await supabase.from("categories").delete().eq("id", id);
   if (error) throw error;
+  cacheInvalidateCategories();
 }
 
 // ============================================
-// BANNERS
+// SUBCATEGORIES — cached
+// ============================================
+
+export async function getSubcategories(categoryId?: string): Promise<Subcategory[]> {
+  const cacheKey = categoryId ? CACHE_KEYS.SUBCATEGORIES_BY_CAT(categoryId) : CACHE_KEYS.SUBCATEGORIES;
+  const cached = cacheGet<Subcategory[]>(cacheKey);
+  if (cached) return cached;
+
+  let query = supabase.from("subcategories").select("*").order("name");
+  if (categoryId) query = query.eq("category_id", categoryId);
+  const { data, error } = await query;
+  if (error) { console.error("Error fetching subcategories:", error); return []; }
+  const subcategories = (data || []).map(mapSubcategory);
+  cacheSet(cacheKey, subcategories, DEFAULT_TTL);
+  return subcategories;
+}
+
+export async function createSubcategory(sub: { categoryId: string; name: string; slug: string; description: string; image: string }) {
+  const { data, error } = await supabase
+    .from("subcategories")
+    .insert({ category_id: sub.categoryId, name: sub.name, slug: sub.slug, description: sub.description, image: sub.image })
+    .select().single();
+  if (error) throw error;
+  cacheInvalidateCategories();
+  return mapSubcategory(data);
+}
+
+export async function updateSubcategory(id: string, updates: Partial<{ name: string; slug: string; description: string; image: string; categoryId: string }>) {
+  const dbUpdates: Record<string, unknown> = {};
+  if (updates.name !== undefined) dbUpdates.name = updates.name;
+  if (updates.slug !== undefined) dbUpdates.slug = updates.slug;
+  if (updates.description !== undefined) dbUpdates.description = updates.description;
+  if (updates.image !== undefined) dbUpdates.image = updates.image;
+  if (updates.categoryId !== undefined) dbUpdates.category_id = updates.categoryId;
+  const { data, error } = await supabase.from("subcategories").update(dbUpdates).eq("id", id).select().single();
+  if (error) throw error;
+  cacheInvalidateCategories();
+  return mapSubcategory(data);
+}
+
+export async function deleteSubcategory(id: string) {
+  const { error } = await supabase.from("subcategories").delete().eq("id", id);
+  if (error) throw error;
+  cacheInvalidateCategories();
+}
+
+// ============================================
+// BANNERS — cached
 // ============================================
 
 export async function getBanners(): Promise<BannerSlide[]> {
+  const cached = cacheGet<BannerSlide[]>(CACHE_KEYS.BANNERS);
+  if (cached) return cached;
+
   const { data, error } = await supabase
     .from("banners")
     .select("*")
@@ -328,20 +450,27 @@ export async function getBanners(): Promise<BannerSlide[]> {
     console.error("Error fetching banners:", error);
     return [];
   }
-  return (data || []).map(mapBanner);
+  const banners = (data || []).map(mapBanner);
+  cacheSet(CACHE_KEYS.BANNERS, banners, DEFAULT_TTL);
+  return banners;
 }
 
 export async function getAllBanners(): Promise<(BannerSlide & { active: boolean; sortOrder: number })[]> {
+  const cached = cacheGet<(BannerSlide & { active: boolean; sortOrder: number })[]>(CACHE_KEYS.BANNERS_ALL);
+  if (cached) return cached;
+
   const { data, error } = await supabase
     .from("banners")
     .select("*")
     .order("sort_order");
   if (error) return [];
-  return (data || []).map((row) => ({
+  const banners = (data || []).map((row: Record<string, unknown>) => ({
     ...mapBanner(row),
     active: row.active as boolean,
     sortOrder: row.sort_order as number,
   }));
+  cacheSet(CACHE_KEYS.BANNERS_ALL, banners, ADMIN_TTL);
+  return banners;
 }
 
 export async function createBanner(banner: {
@@ -367,6 +496,8 @@ export async function createBanner(banner: {
     .select()
     .single();
   if (error) throw error;
+  cacheSet(CACHE_KEYS.BANNERS, null, 0); // invalidate
+  cacheSet(CACHE_KEYS.BANNERS_ALL, null, 0);
   return mapBanner(data);
 }
 
@@ -400,12 +531,16 @@ export async function updateBanner(
     .select()
     .single();
   if (error) throw error;
+  cacheSet(CACHE_KEYS.BANNERS, null, 0);
+  cacheSet(CACHE_KEYS.BANNERS_ALL, null, 0);
   return mapBanner(data);
 }
 
 export async function deleteBanner(id: string) {
   const { error } = await supabase.from("banners").delete().eq("id", id);
   if (error) throw error;
+  cacheSet(CACHE_KEYS.BANNERS, null, 0);
+  cacheSet(CACHE_KEYS.BANNERS_ALL, null, 0);
 }
 
 // ============================================
@@ -413,6 +548,9 @@ export async function deleteBanner(id: string) {
 // ============================================
 
 export async function getOrders(): Promise<Order[]> {
+  const cached = cacheGet<Order[]>(CACHE_KEYS.ORDERS);
+  if (cached) return cached;
+
   const { data, error } = await supabase
     .from("orders")
     .select("*")
@@ -421,7 +559,9 @@ export async function getOrders(): Promise<Order[]> {
     console.error("Error fetching orders:", error);
     return [];
   }
-  return (data || []).map(mapOrder);
+  const orders = (data || []).map(mapOrder);
+  cacheSet(CACHE_KEYS.ORDERS, orders, ADMIN_TTL);
+  return orders;
 }
 
 export async function getUserOrders(userId: string): Promise<Order[]> {
@@ -458,6 +598,7 @@ export async function createOrder(order: {
     .select()
     .single();
   if (error) throw error;
+  cacheSet(CACHE_KEYS.ORDERS, null, 0);
   return mapOrder(data);
 }
 
@@ -467,6 +608,7 @@ export async function updateOrderStatus(id: string, status: Order["status"]) {
     .update({ status })
     .eq("id", id);
   if (error) throw error;
+  cacheSet(CACHE_KEYS.ORDERS, null, 0);
 }
 
 // ============================================
@@ -518,7 +660,6 @@ export async function uploadImage(file: File, folder: string = "products"): Prom
 }
 
 export async function deleteImage(url: string) {
-  // Extract path from URL
   const match = url.match(/product-images\/(.+)$/);
   if (!match) return;
   const { error } = await supabase.storage

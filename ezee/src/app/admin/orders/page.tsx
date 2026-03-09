@@ -20,6 +20,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getOrders, updateOrderStatus } from "@/lib/supabase/queries";
@@ -43,6 +53,12 @@ export default function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [orderList, setOrderList] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingStatus, setPendingStatus] = useState<{
+    orderId: string;
+    orderNumber: string;
+    currentStatus: string;
+    newStatus: Order["status"];
+  } | null>(null);
 
   const loadOrders = useCallback(async () => {
     const data = await getOrders();
@@ -177,7 +193,14 @@ export default function AdminOrdersPage() {
                   <td className="px-5 py-3">
                     <Select
                       value={order.status}
-                      onValueChange={(v) => handleUpdateStatus(order.id, v as Order["status"])}
+                      onValueChange={(v) =>
+                        setPendingStatus({
+                          orderId: order.id,
+                          orderNumber: order.orderNumber,
+                          currentStatus: order.status,
+                          newStatus: v as Order["status"],
+                        })
+                      }
                     >
                       <SelectTrigger className="h-8 w-[140px] rounded-lg cursor-pointer hover:bg-muted/30 transition-colors">
                         <Badge className={`${statusColors[order.status]} border-0 capitalize text-xs`}>
@@ -265,6 +288,38 @@ export default function AdminOrdersPage() {
       <p className="text-xs text-muted-foreground">
         Showing {filtered.length} of {orderList.length} orders
       </p>
+
+      <AlertDialog
+        open={pendingStatus !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingStatus(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Update Order Status?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Change order {pendingStatus?.orderNumber} from{" "}
+              {pendingStatus?.currentStatus} to {pendingStatus?.newStatus}?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingStatus(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingStatus) {
+                  handleUpdateStatus(pendingStatus.orderId, pendingStatus.newStatus);
+                  setPendingStatus(null);
+                }
+              }}
+            >
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

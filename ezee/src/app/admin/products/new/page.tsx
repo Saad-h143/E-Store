@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { ArrowLeft, Loader2, Upload, X, ImageIcon } from "lucide-react";
+import { ArrowLeft, Loader2, Upload, X, ImageIcon, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,13 +20,14 @@ import {
 } from "@/components/ui/select";
 import {
   getCategories,
+  getSubcategories,
   getProductById,
   createProduct,
   updateProduct,
   uploadImage,
 } from "@/lib/supabase/queries";
 import { toast } from "sonner";
-import type { Category, Product } from "@/types";
+import type { Category, Subcategory, Product } from "@/types";
 
 function NewProductContent() {
   const router = useRouter();
@@ -35,10 +36,12 @@ function NewProductContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [categories, setCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(!!editId);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [images, setImages] = useState<string[]>([]);
+  const [specs, setSpecs] = useState<{ key: string; value: string }[]>([]);
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -47,6 +50,7 @@ function NewProductContent() {
     discountType: "percentage",
     stock: "",
     categoryId: "",
+    subcategoryId: "",
     active: true,
     featured: false,
     bestSeller: false,
@@ -69,18 +73,31 @@ function NewProductContent() {
             discountType: product.discountType,
             stock: product.stock.toString(),
             categoryId: product.categoryId,
+            subcategoryId: product.subcategoryId || "",
             active: product.active,
             featured: product.featured,
             bestSeller: product.bestSeller,
             newArrival: product.newArrival,
           });
           setImages(product.images || []);
+          if (product.specs && Object.keys(product.specs).length > 0) {
+            setSpecs(Object.entries(product.specs).map(([key, value]) => ({ key, value })));
+          }
         }
       }
       setPageLoading(false);
     }
     load();
   }, [editId]);
+
+  // Load subcategories when categoryId changes
+  useEffect(() => {
+    if (form.categoryId) {
+      getSubcategories(form.categoryId).then(setSubcategories);
+    } else {
+      setSubcategories([]);
+    }
+  }, [form.categoryId]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -132,10 +149,15 @@ function NewProductContent() {
         active: form.active,
         images,
         categoryId: form.categoryId,
+        subcategoryId: form.subcategoryId || undefined,
         featured: form.featured,
         bestSeller: form.bestSeller,
         newArrival: form.newArrival,
-        specs: {},
+        specs: Object.fromEntries(
+          specs
+            .filter((s) => s.key.trim() && s.value.trim())
+            .map((s) => [s.key.trim(), s.value.trim()])
+        ),
       };
 
       if (editId) {
@@ -219,7 +241,7 @@ function NewProductContent() {
 
           <div className="space-y-2">
             <Label htmlFor="category">Category *</Label>
-            <Select value={form.categoryId} onValueChange={(v) => updateField("categoryId", v)}>
+            <Select value={form.categoryId} onValueChange={(v) => { updateField("categoryId", v); updateField("subcategoryId", ""); }}>
               <SelectTrigger className="h-11 rounded-xl">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
@@ -232,6 +254,24 @@ function NewProductContent() {
               </SelectContent>
             </Select>
           </div>
+
+          {subcategories.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="subcategory">Subcategory</Label>
+              <Select value={form.subcategoryId} onValueChange={(v) => updateField("subcategoryId", v)}>
+                <SelectTrigger className="h-11 rounded-xl">
+                  <SelectValue placeholder="Select subcategory (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {subcategories.map((sub) => (
+                    <SelectItem key={sub.id} value={sub.id}>
+                      {sub.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         {/* Images */}
@@ -347,6 +387,71 @@ function NewProductContent() {
               </Select>
             </div>
           </div>
+        </div>
+
+        {/* Specifications */}
+        <div className="rounded-2xl border bg-card/80 backdrop-blur-xl p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold">Specifications</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Add product specs like RAM, Camera, Battery, etc.</p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-xl"
+              onClick={() => setSpecs((prev) => [...prev, { key: "", value: "" }])}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              Add Spec
+            </Button>
+          </div>
+
+          {specs.length === 0 && (
+            <div className="text-center py-6 text-muted-foreground border-2 border-dashed rounded-xl">
+              <p className="text-sm">No specifications added yet</p>
+              <p className="text-xs mt-1">Click &quot;Add Spec&quot; to add product specifications</p>
+            </div>
+          )}
+
+          {specs.map((spec, index) => (
+            <div key={index} className="flex items-center gap-3">
+              <div className="flex-1">
+                <Input
+                  placeholder="e.g., RAM"
+                  value={spec.key}
+                  onChange={(e) => {
+                    const updated = [...specs];
+                    updated[index] = { ...updated[index], key: e.target.value };
+                    setSpecs(updated);
+                  }}
+                  className="h-10 rounded-xl"
+                />
+              </div>
+              <div className="flex-[2]">
+                <Input
+                  placeholder="e.g., 12GB"
+                  value={spec.value}
+                  onChange={(e) => {
+                    const updated = [...specs];
+                    updated[index] = { ...updated[index], value: e.target.value };
+                    setSpecs(updated);
+                  }}
+                  className="h-10 rounded-xl"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl"
+                onClick={() => setSpecs((prev) => prev.filter((_, i) => i !== index))}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
         </div>
 
         {/* Toggles */}
