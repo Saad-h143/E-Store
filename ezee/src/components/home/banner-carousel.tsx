@@ -139,7 +139,7 @@ export function BannerCarousel({ slides }: BannerCarouselProps) {
       <Button
         variant="ghost"
         size="icon"
-        className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/25 opacity-70 hover:opacity-100 transition-all duration-300 focus-visible:ring-2 focus-visible:ring-white/50"
+        className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/25 opacity-70 hover:opacity-100 transition-all duration-300 focus-visible:ring-2 focus-visible:ring-white/50"
         onClick={scrollNext}
         aria-label="Next slide"
       >
