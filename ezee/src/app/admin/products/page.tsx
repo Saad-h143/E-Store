@@ -81,31 +81,38 @@ export default function AdminProductsPage() {
   });
 
   const toggleActive = async (id: string, currentActive: boolean) => {
-    setMutating(id);
+    // Optimistic update — change UI instantly
+    setProductList((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, active: !currentActive } : p))
+    );
+    toast.success(currentActive ? "Product deactivated" : "Product activated");
+
     try {
       await updateProduct(id, { active: !currentActive });
-      await fetchData();
-      toast.success("Product status updated");
     } catch (error) {
+      // Revert on failure
       console.error("Failed to update product:", error);
+      setProductList((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, active: currentActive } : p))
+      );
       toast.error("Failed to update product status");
-    } finally {
-      setMutating(null);
     }
   };
 
   const handleDeleteProduct = async (id: string) => {
-    setMutating(id);
+    // Optimistic delete — remove from UI instantly
+    const backup = productList;
+    setProductList((prev) => prev.filter((p) => p.id !== id));
+    setDeleteId(null);
+    toast.success("Product deleted");
+
     try {
       await deleteProductFromDb(id);
-      setDeleteId(null);
-      await fetchData();
-      toast.success("Product deleted");
     } catch (error) {
+      // Revert on failure
       console.error("Failed to delete product:", error);
+      setProductList(backup);
       toast.error("Failed to delete product");
-    } finally {
-      setMutating(null);
     }
   };
 

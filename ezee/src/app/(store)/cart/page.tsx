@@ -44,33 +44,34 @@ export default function CartPage() {
     }
 
     setPlacingOrder(true);
-    try {
-      const orderItems = items.map((item) => ({
-        productId: item.product.id,
-        title: item.product.title,
-        price: getDiscountedPrice(item.product),
-        quantity: item.quantity,
-        image: item.product.images[0] || "",
-      }));
 
-      await createOrder({
-        userId: user.id,
-        customerName: user.name,
-        customerEmail: user.email,
-        customerPhone: shippingInfo.phone,
-        items: orderItems,
-        total: grandTotal,
-        shippingAddress: shippingInfo.address,
-      });
+    const orderItems = items.map((item) => ({
+      productId: item.product.id,
+      title: item.product.title,
+      price: getDiscountedPrice(item.product),
+      quantity: item.quantity,
+      image: item.product.images[0] || "",
+    }));
 
-      clearCart();
-      toast.success("Order placed successfully!");
-      router.push("/account");
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to place order";
-      toast.error(message);
-    }
-    setPlacingOrder(false);
+    const orderPromise = createOrder({
+      userId: user.id,
+      customerName: user.name,
+      customerEmail: user.email,
+      customerPhone: shippingInfo.phone,
+      items: orderItems,
+      total: grandTotal,
+      shippingAddress: shippingInfo.address,
+    });
+
+    // Clear cart and navigate immediately for fast UX
+    clearCart();
+    router.push("/account");
+
+    toast.promise(orderPromise, {
+      loading: "Placing your order...",
+      success: "Order placed successfully!",
+      error: "Failed to place order. Please contact support.",
+    });
   };
 
   if (items.length === 0) {
