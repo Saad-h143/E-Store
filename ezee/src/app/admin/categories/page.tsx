@@ -163,7 +163,7 @@ export default function AdminCategoriesPage() {
         </div>
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-xl">
+            <Button className="rounded-xl bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 text-white">
               <Plus className="h-4 w-4 mr-2" />
               Add Category
             </Button>
@@ -240,15 +240,15 @@ export default function AdminCategoriesPage() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
-            className="rounded-2xl border bg-card overflow-hidden"
+            className="rounded-2xl border bg-card/80 backdrop-blur-xl overflow-hidden hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
           >
-            <div className="relative h-32 bg-muted">
+            <div className="relative h-32 bg-muted group/image overflow-hidden">
               {category.image ? (
                 <Image
                   src={category.image}
                   alt={category.name}
                   fill
-                  className="object-cover"
+                  className="object-cover group-hover/image:scale-105 transition-transform duration-300"
                   sizes="(max-width: 640px) 100vw, 33vw"
                 />
               ) : (
@@ -256,6 +256,7 @@ export default function AdminCategoriesPage() {
                   <FolderTree className="h-8 w-8 text-muted-foreground/40" />
                 </div>
               )}
+              <div className="absolute inset-0 bg-black/0 group-hover/image:bg-black/10 transition-colors duration-300" />
             </div>
             <div className="p-4">
               <div className="flex items-center justify-between mb-2">
@@ -276,7 +277,7 @@ export default function AdminCategoriesPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="flex-1 rounded-lg"
+                      className="flex-1 rounded-lg hover:bg-primary/5 hover:border-primary/30 transition-colors"
                       onClick={() => setEditCategory({ ...category })}
                     >
                       <Edit className="h-3.5 w-3.5 mr-1.5" />
@@ -358,7 +359,7 @@ export default function AdminCategoriesPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="rounded-lg text-destructive hover:text-destructive"
+                      className="rounded-lg text-destructive hover:text-destructive hover:bg-destructive/5 hover:border-destructive/30 transition-colors"
                       onClick={() => setDeleteId(category.id)}
                     >
                       <Trash2 className="h-3.5 w-3.5" />

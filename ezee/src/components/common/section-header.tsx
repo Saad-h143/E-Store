@@ -23,15 +23,16 @@ export function SectionHeader({ title, subtitle, href, linkText = "View All" }: 
     >
       <div>
         <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">{title}</h2>
+        <div className="h-1 w-12 rounded-full bg-gradient-to-r from-primary to-purple-500 mt-3" />
         {subtitle && (
           <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
         )}
       </div>
       {href && (
         <Link href={href}>
-          <Button variant="ghost" className="text-sm font-medium group">
+          <Button variant="ghost" className="text-sm font-medium group hover:text-primary focus-visible:ring-2">
             {linkText}
-            <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+            <ArrowRight aria-hidden="true" className="ml-1 h-4 w-4 transition-all duration-300 group-hover:translate-x-1.5" />
           </Button>
         </Link>
       )}

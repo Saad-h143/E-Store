@@ -39,6 +39,7 @@ import { cn } from "@/lib/utils";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/shop", label: "Shop" },
+  { href: "/contact", label: "Contact" },
 ];
 
 export function Navbar() {
@@ -69,20 +70,24 @@ export function Navbar() {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+          "fixed z-50 transition-all duration-500",
           isScrolled
-            ? "bg-background/80 backdrop-blur-xl border-b shadow-sm"
-            : "bg-background/50 backdrop-blur-md"
+            ? "top-3 left-3 right-3 rounded-2xl bg-background/70 backdrop-blur-2xl shadow-lg shadow-black/5 border border-white/10"
+            : "top-0 left-0 right-0 bg-transparent backdrop-blur-md"
         )}
       >
+        {/* Gradient accent border when scrolled */}
+        {isScrolled && (
+          <div className="absolute bottom-0 left-[10%] right-[10%] h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+        )}
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between gap-4">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 shrink-0">
-              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg">
+            <Link href="/" className="flex items-center gap-2 shrink-0 cursor-pointer group">
+              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-purple-600 text-white font-bold text-lg shadow-md shadow-primary/25 group-hover:shadow-lg group-hover:shadow-primary/30 transition-shadow duration-300">
                 <Smartphone className="h-5 w-5" />
               </div>
-              <span className="text-xl font-bold tracking-tight">
+              <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
                 Ezee
               </span>
             </Link>
@@ -94,7 +99,7 @@ export function Navbar() {
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    "relative px-4 py-2 text-sm font-medium rounded-lg transition-colors",
+                    "relative px-4 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer",
                     pathname === link.href
                       ? "text-primary"
                       : "text-muted-foreground hover:text-foreground"
@@ -105,7 +110,7 @@ export function Navbar() {
                     <motion.div
                       layoutId="navbar-indicator"
                       className="absolute inset-0 bg-primary/10 rounded-lg"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.3 }}
                     />
                   )}
                 </Link>
@@ -114,7 +119,7 @@ export function Navbar() {
               {/* Categories Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg transition-colors">
+                  <button className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg transition-colors cursor-pointer">
                     Categories <ChevronDown className="h-3.5 w-3.5" />
                   </button>
                 </DropdownMenuTrigger>
@@ -139,8 +144,9 @@ export function Navbar() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-lg"
+                className="h-9 w-9 rounded-lg cursor-pointer hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary/50"
                 onClick={() => setSearchOpen(!searchOpen)}
+                aria-label="Toggle search"
               >
                 <Search className="h-4 w-4" />
               </Button>
@@ -150,8 +156,9 @@ export function Navbar() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 rounded-lg"
+                  className="h-9 w-9 rounded-lg cursor-pointer hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary/50"
                   onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
                 >
                   {theme === "dark" ? (
                     <Sun className="h-4 w-4" />
@@ -162,14 +169,14 @@ export function Navbar() {
               )}
 
               {/* Cart */}
-              <Link href="/cart">
-                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg relative">
+              <Link href="/cart" className="cursor-pointer">
+                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg relative cursor-pointer hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary/50" aria-label={`Shopping cart${itemCount > 0 ? `, ${itemCount} items` : ""}`}>
                   <ShoppingCart className="h-4 w-4" />
                   {itemCount > 0 && (
                     <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="absolute -top-0.5 -right-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground"
+                      className="absolute -top-0.5 -right-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-gradient-to-br from-primary to-purple-600 text-[10px] font-bold text-white shadow-md shadow-primary/30 animate-pulse"
                     >
                       {itemCount > 9 ? "9+" : itemCount}
                     </motion.span>
@@ -181,8 +188,8 @@ export function Navbar() {
               {isAuthenticated && user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg cursor-pointer">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-primary to-purple-600 text-white text-xs font-bold">
                         {user.name.charAt(0).toUpperCase()}
                       </div>
                     </Button>
@@ -220,8 +227,8 @@ export function Navbar() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Link href="/login">
-                  <Button variant="default" size="sm" className="h-9 rounded-lg text-xs font-medium">
+                <Link href="/login" className="cursor-pointer">
+                  <Button variant="default" size="sm" className="h-9 rounded-lg text-xs font-medium cursor-pointer bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-md shadow-primary/25">
                     <User className="mr-1.5 h-3.5 w-3.5" /> Login
                   </Button>
                 </Link>
@@ -230,27 +237,29 @@ export function Navbar() {
               {/* Mobile Menu */}
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild className="md:hidden">
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg cursor-pointer focus-visible:ring-2 focus-visible:ring-primary/50" aria-label="Open mobile menu">
                     <Menu className="h-4 w-4" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-80">
-                  <SheetHeader>
+                <SheetContent side="right" className="w-80 bg-background/95 backdrop-blur-2xl">
+                  <SheetHeader className="pb-4 border-b border-border/50">
                     <SheetTitle className="flex items-center gap-2">
-                      <Smartphone className="h-5 w-5 text-primary" />
-                      Ezee
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-purple-600 text-white">
+                        <Smartphone className="h-4 w-4" />
+                      </div>
+                      <span className="font-bold">Ezee</span>
                     </SheetTitle>
                   </SheetHeader>
-                  <nav className="mt-8 flex flex-col gap-2">
+                  <nav className="mt-6 flex flex-col gap-1.5">
                     {navLinks.map((link) => (
                       <Link
                         key={link.href}
                         href={link.href}
                         onClick={() => setMobileOpen(false)}
                         className={cn(
-                          "px-4 py-3 rounded-lg text-sm font-medium transition-colors",
+                          "px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer",
                           pathname === link.href
-                            ? "bg-primary/10 text-primary"
+                            ? "bg-gradient-to-r from-primary/15 to-purple-600/10 text-primary"
                             : "text-muted-foreground hover:bg-accent hover:text-foreground"
                         )}
                       >
@@ -265,7 +274,7 @@ export function Navbar() {
                         key={cat.id}
                         href={`/shop?category=${cat.slug}`}
                         onClick={() => setMobileOpen(false)}
-                        className="px-4 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                        className="px-4 py-2.5 rounded-xl text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-200 cursor-pointer"
                       >
                         {cat.name}
                       </Link>
@@ -278,7 +287,7 @@ export function Navbar() {
                         <Link
                           href="/admin"
                           onClick={() => setMobileOpen(false)}
-                          className="px-4 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors flex items-center gap-2"
+                          className="px-4 py-2.5 rounded-xl text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-all duration-200 cursor-pointer flex items-center gap-2"
                         >
                           <Shield className="h-4 w-4" /> Admin Panel
                         </Link>
@@ -299,7 +308,7 @@ export function Navbar() {
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="overflow-hidden border-t"
+              className="overflow-hidden border-t border-border/30"
             >
               <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
                 <form
@@ -317,15 +326,16 @@ export function Navbar() {
                   <Input
                     name="search"
                     placeholder="Search phones, brands, models..."
-                    className="pl-10 pr-10 h-11 rounded-xl"
+                    className="pl-10 pr-10 h-11 rounded-xl bg-background/50 backdrop-blur-sm border-border/50 focus:border-primary/30 focus:ring-primary/20 transition-all"
                     autoFocus
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary/50"
                     onClick={() => setSearchOpen(false)}
+                    aria-label="Close search"
                   >
                     <X className="h-4 w-4" />
                   </Button>

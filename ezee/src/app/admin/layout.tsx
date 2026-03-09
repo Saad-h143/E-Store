@@ -70,7 +70,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="flex items-center gap-2 px-4 h-16">
-        <div className="h-8 w-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center">
+        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 text-white flex items-center justify-center">
           <Smartphone className="h-4 w-4" />
         </div>
         <span className="font-bold text-lg">Ezee Admin</span>
@@ -90,7 +90,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
                 isActive
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-gradient-to-r from-primary to-purple-600 text-white"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent"
               )}
             >
@@ -127,7 +127,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-64 lg:flex-col border-r bg-card">
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-64 lg:flex-col border-r bg-card/80 backdrop-blur-xl">
         <SidebarContent />
       </aside>
 
@@ -175,7 +175,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </Button>
             )}
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-purple-600 text-white ring-2 ring-primary/20 flex items-center justify-center text-xs font-bold">
                 {user.name.charAt(0)}
               </div>
               <span className="text-sm font-medium">{user.name}</span>

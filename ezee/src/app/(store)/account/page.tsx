@@ -54,7 +54,7 @@ export default function AccountPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-      <h1 className="text-3xl font-bold tracking-tight mb-8">My Account</h1>
+      <h1 className="text-3xl font-bold tracking-tight mb-8 gradient-text">My Account</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Profile Card */}
@@ -63,9 +63,9 @@ export default function AccountPage() {
           animate={{ opacity: 1, y: 0 }}
           className="lg:col-span-1"
         >
-          <div className="rounded-2xl border bg-card p-6 space-y-4">
+          <div className="rounded-2xl border bg-card/80 backdrop-blur-sm p-6 space-y-4">
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center text-xl font-bold">
+              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-purple-600 text-white flex items-center justify-center text-xl font-bold">
                 {user.name.charAt(0).toUpperCase()}
               </div>
               <div>
@@ -119,7 +119,7 @@ export default function AccountPage() {
           transition={{ delay: 0.1 }}
           className="lg:col-span-2"
         >
-          <div className="rounded-2xl border bg-card p-6">
+          <div className="rounded-2xl border bg-card/80 backdrop-blur-sm p-6">
             <div className="flex items-center gap-2 mb-6">
               <Package className="h-5 w-5 text-primary" />
               <h2 className="text-lg font-bold">My Orders</h2>
@@ -135,7 +135,7 @@ export default function AccountPage() {
                 {userOrders.slice(0, 5).map((order) => (
                   <div
                     key={order.id}
-                    className="rounded-xl border p-4 space-y-3"
+                    className="rounded-xl border p-4 space-y-3 hover:shadow-md hover:border-primary/20 transition-all duration-200"
                   >
                     <div className="flex items-center justify-between">
                       <div>
@@ -148,7 +148,7 @@ export default function AccountPage() {
                           })}
                         </p>
                       </div>
-                      <Badge className={`${statusColors[order.status]} border-0 capitalize`}>
+                      <Badge className={`${statusColors[order.status]} border-0 capitalize font-semibold`}>
                         {order.status}
                       </Badge>
                     </div>

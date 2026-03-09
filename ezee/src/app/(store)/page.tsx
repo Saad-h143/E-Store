@@ -44,66 +44,76 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-16 py-6">
-      {loading ? <BannerSkeleton /> : banners.length > 0 && <BannerCarousel slides={banners} />}
+    <div className="space-y-20 py-8">
+      {/* Banner — full-width edge-to-edge */}
+      {loading ? (
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <BannerSkeleton />
+        </div>
+      ) : (
+        banners.length > 0 && <BannerCarousel slides={banners} />
+      )}
 
-      <FeaturesStrip />
+      {/* All other sections in container */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-20">
+        <FeaturesStrip />
 
-      <section>
-        <SectionHeader title="Featured Products" subtitle="Handpicked phones for you" href="/shop" />
-        {loading ? (
-          <ProductGridSkeleton count={4} />
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {featured.map((product, index) => (
-              <ProductCard key={product.id} product={product} index={index} />
-            ))}
-          </div>
-        )}
-      </section>
+        <section>
+          <SectionHeader title="Featured Products" subtitle="Handpicked phones for you" href="/shop" />
+          {loading ? (
+            <ProductGridSkeleton count={4} />
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              {featured.map((product, index) => (
+                <ProductCard key={product.id} product={product} index={index} />
+              ))}
+            </div>
+          )}
+        </section>
 
-      {categories.length > 0 && <CategoriesSection categories={categories} />}
+        {categories.length > 0 && <CategoriesSection categories={categories} />}
 
-      <section>
-        <SectionHeader title="New Arrivals" subtitle="Just dropped — the latest smartphones" href="/shop?sort=newest" />
-        {loading ? (
-          <ProductGridSkeleton count={4} />
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {newArrivals.map((product, index) => (
-              <ProductCard key={product.id} product={product} index={index} />
-            ))}
-          </div>
-        )}
-      </section>
+        <section>
+          <SectionHeader title="New Arrivals" subtitle="Just dropped — the latest smartphones" href="/shop?sort=newest" />
+          {loading ? (
+            <ProductGridSkeleton count={4} />
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              {newArrivals.map((product, index) => (
+                <ProductCard key={product.id} product={product} index={index} />
+              ))}
+            </div>
+          )}
+        </section>
 
-      <section>
-        <SectionHeader title="Best Sellers" subtitle="Top rated and most popular" href="/shop?sort=best-selling" />
-        {loading ? (
-          <ProductGridSkeleton count={4} />
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {bestSellers.map((product, index) => (
-              <ProductCard key={product.id} product={product} index={index} />
-            ))}
-          </div>
-        )}
-      </section>
+        <section>
+          <SectionHeader title="Best Sellers" subtitle="Top rated and most popular" href="/shop?sort=best-selling" />
+          {loading ? (
+            <ProductGridSkeleton count={4} />
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              {bestSellers.map((product, index) => (
+                <ProductCard key={product.id} product={product} index={index} />
+              ))}
+            </div>
+          )}
+        </section>
 
-      <section>
-        <SectionHeader title="Hot Deals" subtitle="Incredible discounts you won't want to miss" href="/shop?deals=true" />
-        {loading ? (
-          <ProductGridSkeleton count={4} />
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {deals.map((product, index) => (
-              <ProductCard key={product.id} product={product} index={index} />
-            ))}
-          </div>
-        )}
-      </section>
+        <section>
+          <SectionHeader title="Hot Deals" subtitle="Incredible discounts you won't want to miss" href="/shop?deals=true" />
+          {loading ? (
+            <ProductGridSkeleton count={4} />
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              {deals.map((product, index) => (
+                <ProductCard key={product.id} product={product} index={index} />
+              ))}
+            </div>
+          )}
+        </section>
 
-      <TestimonialsSection testimonials={testimonials} />
+        <TestimonialsSection testimonials={testimonials} />
+      </div>
     </div>
   );
 }

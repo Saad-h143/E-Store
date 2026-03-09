@@ -180,7 +180,7 @@ export default function AdminBannersPage() {
         </div>
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogTrigger asChild>
-            <Button className="rounded-xl">
+            <Button className="rounded-xl bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 text-white">
               <Plus className="h-4 w-4 mr-2" />
               Add Banner
             </Button>
@@ -284,7 +284,7 @@ export default function AdminBannersPage() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
-            className="rounded-2xl border bg-card overflow-hidden"
+            className="rounded-2xl border bg-card/80 backdrop-blur-xl overflow-hidden hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
           >
             <div className={`relative h-48 bg-gradient-to-br ${banner.gradient}`}>
               {banner.image ? (
@@ -307,13 +307,11 @@ export default function AdminBannersPage() {
                   </p>
                 </div>
               </div>
-              {!banner.active && (
-                <div className="absolute top-2 right-2">
-                  <Badge variant="secondary" className="text-xs bg-black/50 text-white">
-                    Inactive
-                  </Badge>
-                </div>
-              )}
+              <div className="absolute top-2 right-2">
+                <Badge variant="secondary" className={`text-xs ${banner.active ? "bg-emerald-500/80 text-white" : "bg-black/50 text-white"}`}>
+                  {banner.active ? "Active" : "Inactive"}
+                </Badge>
+              </div>
             </div>
             <div className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">

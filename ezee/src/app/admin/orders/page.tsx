@@ -126,7 +126,7 @@ export default function AdminOrdersPage() {
       </div>
 
       {/* Orders Table */}
-      <div className="rounded-2xl border bg-card">
+      <div className="rounded-2xl border bg-card/80 backdrop-blur-xl">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -161,7 +161,7 @@ export default function AdminOrdersPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.02 }}
-                  className="hover:bg-muted/30 transition-colors"
+                  className="hover:bg-muted/40 transition-all duration-200"
                 >
                   <td className="px-5 py-3 text-sm font-medium">{order.orderNumber}</td>
                   <td className="px-5 py-3">
@@ -179,7 +179,7 @@ export default function AdminOrdersPage() {
                       value={order.status}
                       onValueChange={(v) => handleUpdateStatus(order.id, v as Order["status"])}
                     >
-                      <SelectTrigger className="h-8 w-[140px] rounded-lg cursor-pointer">
+                      <SelectTrigger className="h-8 w-[140px] rounded-lg cursor-pointer hover:bg-muted/30 transition-colors">
                         <Badge className={`${statusColors[order.status]} border-0 capitalize text-xs`}>
                           {order.status}
                         </Badge>

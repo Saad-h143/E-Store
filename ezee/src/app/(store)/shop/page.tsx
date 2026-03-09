@@ -219,7 +219,7 @@ function ShopContent() {
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Shop</h1>
+        <h1 className="text-3xl font-bold tracking-tight gradient-text">Shop</h1>
         <p className="text-muted-foreground mt-1">
           Browse our collection of premium smartphones
         </p>
@@ -233,12 +233,13 @@ function ShopContent() {
             placeholder="Search phones..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 h-11 rounded-xl"
+            className="pl-10 h-11 rounded-xl bg-background/60 backdrop-blur-sm"
           />
           {search && (
             <Button
               variant="ghost"
               size="icon"
+              aria-label="Clear search"
               className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
               onClick={() => setSearch("")}
             >
@@ -321,7 +322,7 @@ function ShopContent() {
       <div className="flex gap-8">
         {/* Desktop Sidebar */}
         <aside className="hidden lg:block w-64 shrink-0">
-          <div className="sticky top-20 rounded-2xl border bg-card p-5">
+          <div className="sticky top-20 rounded-2xl border bg-card/80 backdrop-blur-sm p-5">
             <h3 className="text-sm font-semibold mb-4">Filters</h3>
             <FilterContent />
           </div>
@@ -351,7 +352,7 @@ function ShopContent() {
               animate={{ opacity: 1 }}
               className="flex flex-col items-center justify-center py-20 text-center"
             >
-              <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-4">
+              <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center mb-4">
                 <Search className="h-8 w-8 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-semibold mb-1">No products found</h3>

@@ -102,7 +102,7 @@ export default function CartPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-      <h1 className="text-3xl font-bold tracking-tight mb-8">Shopping Cart</h1>
+      <h1 className="text-3xl font-bold tracking-tight mb-8 gradient-text">Shopping Cart</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Cart Items */}
@@ -117,7 +117,7 @@ export default function CartPage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20, height: 0 }}
-                  className="flex gap-4 rounded-2xl border bg-card p-4"
+                  className="flex gap-4 rounded-2xl border bg-card p-4 hover:shadow-md hover:border-primary/20 transition-all duration-200"
                 >
                   <Link
                     href={`/product/${item.product.slug}`}
@@ -219,7 +219,7 @@ export default function CartPage() {
 
         {/* Order Summary */}
         <div>
-          <div className="sticky top-20 rounded-2xl border bg-card p-6 space-y-4">
+          <div className="sticky top-20 rounded-2xl border bg-card/80 backdrop-blur-sm p-6 space-y-4 overflow-hidden relative before:absolute before:top-0 before:left-0 before:right-0 before:h-1 before:bg-gradient-to-r before:from-primary before:to-purple-600">
             <h2 className="text-lg font-bold">Order Summary</h2>
 
             <div className="space-y-3 text-sm">
@@ -296,7 +296,7 @@ export default function CartPage() {
 
             <Button
               size="lg"
-              className="w-full h-12 rounded-xl font-semibold"
+              className="w-full h-12 rounded-xl font-semibold bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 text-white"
               disabled={!isAuthenticated || placingOrder}
               onClick={handleCheckout}
             >

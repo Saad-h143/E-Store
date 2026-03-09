@@ -190,7 +190,7 @@ function NewProductContent() {
         className="space-y-6"
       >
         {/* Basic Info */}
-        <div className="rounded-2xl border bg-card p-6 space-y-4">
+        <div className="rounded-2xl border bg-card/80 backdrop-blur-xl p-6 space-y-4">
           <h2 className="font-semibold">Basic Information</h2>
 
           <div className="space-y-2">
@@ -235,7 +235,7 @@ function NewProductContent() {
         </div>
 
         {/* Images */}
-        <div className="rounded-2xl border bg-card p-6 space-y-4">
+        <div className="rounded-2xl border bg-card/80 backdrop-blur-xl p-6 space-y-4">
           <h2 className="font-semibold">Product Images</h2>
 
           {/* Image Grid */}
@@ -274,7 +274,7 @@ function NewProductContent() {
             <Button
               type="button"
               variant="outline"
-              className="rounded-xl w-full h-20 border-dashed"
+              className="rounded-xl w-full h-20 border-dashed hover:border-primary/50 hover:bg-primary/5 transition-colors"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingImage}
             >
@@ -292,7 +292,7 @@ function NewProductContent() {
         </div>
 
         {/* Pricing */}
-        <div className="rounded-2xl border bg-card p-6 space-y-4">
+        <div className="rounded-2xl border bg-card/80 backdrop-blur-xl p-6 space-y-4">
           <h2 className="font-semibold">Pricing & Stock</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -350,7 +350,7 @@ function NewProductContent() {
         </div>
 
         {/* Toggles */}
-        <div className="rounded-2xl border bg-card p-6 space-y-4">
+        <div className="rounded-2xl border bg-card/80 backdrop-blur-xl p-6 space-y-4">
           <h2 className="font-semibold">Visibility & Tags</h2>
           <div className="space-y-4">
             {[
@@ -378,7 +378,7 @@ function NewProductContent() {
           <Link href="/admin/products">
             <Button variant="outline" className="rounded-xl">Cancel</Button>
           </Link>
-          <Button type="submit" className="rounded-xl min-w-[140px]" disabled={loading}>
+          <Button type="submit" className="rounded-xl min-w-[140px] bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 text-white" disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {editId ? "Update Product" : "Create Product"}
           </Button>

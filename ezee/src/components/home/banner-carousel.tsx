@@ -37,7 +37,7 @@ export function BannerCarousel({ slides }: BannerCarouselProps) {
 
   return (
     <section className="relative group">
-      <div className="embla overflow-hidden rounded-2xl lg:rounded-3xl" ref={emblaRef}>
+      <div className="embla overflow-hidden" ref={emblaRef}>
         <div className="embla__container flex">
           {slides.map((slide, index) => (
             <div key={slide.id} className="embla__slide min-w-0 flex-[0_0_100%]">
@@ -58,7 +58,7 @@ export function BannerCarousel({ slides }: BannerCarouselProps) {
                 />
 
                 {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-purple-900/30 to-blue-900/20" />
 
                 {/* Content */}
                 <div className="relative h-full flex items-center">
@@ -70,13 +70,13 @@ export function BannerCarousel({ slides }: BannerCarouselProps) {
                           initial={{ opacity: 0, x: -40 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: 40 }}
-                          transition={{ duration: 0.5 }}
+                          transition={{ duration: 0.3 }}
                           className="max-w-xl"
                         >
                           <motion.span
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 }}
+                            transition={{ delay: 0.15, duration: 0.3 }}
                             className="inline-block text-xs sm:text-sm font-semibold tracking-[0.2em] uppercase text-white/70 mb-3"
                           >
                             {slide.subtitle}
@@ -85,7 +85,7 @@ export function BannerCarousel({ slides }: BannerCarouselProps) {
                           <motion.h2
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
+                            transition={{ delay: 0.3, duration: 0.4 }}
                             className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight"
                           >
                             {slide.title}
@@ -94,7 +94,7 @@ export function BannerCarousel({ slides }: BannerCarouselProps) {
                           <motion.p
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.3 }}
+                            transition={{ delay: 0.45, duration: 0.3 }}
                             className="mt-4 text-sm sm:text-base text-white/80 leading-relaxed max-w-md"
                           >
                             {slide.description}
@@ -103,13 +103,13 @@ export function BannerCarousel({ slides }: BannerCarouselProps) {
                           <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4 }}
+                            transition={{ delay: 0.6, duration: 0.3 }}
                             className="mt-6 sm:mt-8"
                           >
                             <Link href={slide.ctaLink}>
                               <Button
                                 size="lg"
-                                className="rounded-xl text-sm font-semibold h-12 px-8 bg-white text-black hover:bg-white/90 shadow-2xl"
+                                className="rounded-xl text-sm font-semibold h-12 px-8 bg-gradient-to-r from-primary to-purple-600 text-white hover:opacity-90 shadow-2xl"
                               >
                                 {slide.ctaText}
                               </Button>
@@ -130,28 +130,31 @@ export function BannerCarousel({ slides }: BannerCarouselProps) {
       <Button
         variant="ghost"
         size="icon"
-        className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/25 opacity-70 hover:opacity-100 transition-all duration-300 focus-visible:ring-2 focus-visible:ring-white/50"
         onClick={scrollPrev}
+        aria-label="Previous slide"
       >
         <ChevronLeft className="h-5 w-5" />
       </Button>
       <Button
         variant="ghost"
         size="icon"
-        className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/25 opacity-70 hover:opacity-100 transition-all duration-300 focus-visible:ring-2 focus-visible:ring-white/50"
         onClick={scrollNext}
+        aria-label="Next slide"
       >
         <ChevronRight className="h-5 w-5" />
       </Button>
 
       {/* Dots */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/20 backdrop-blur-xl rounded-full px-3 py-2 border border-white/10">
         {slides.map((_, index) => (
           <button
             key={index}
             onClick={() => scrollTo(index)}
+            aria-label={`Go to slide ${index + 1}`}
             className={cn(
-              "h-2 rounded-full transition-all duration-300",
+              "h-2 rounded-full transition-all duration-300 focus-visible:ring-2 focus-visible:ring-white/50",
               selectedIndex === index
                 ? "w-8 bg-white"
                 : "w-2 bg-white/40 hover:bg-white/60"

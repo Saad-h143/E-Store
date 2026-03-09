@@ -28,7 +28,7 @@ const statusColors: Record<string, string> = {
 
 function StatCardSkeleton() {
   return (
-    <div className="rounded-2xl border bg-card p-5">
+    <div className="rounded-2xl border bg-card/80 backdrop-blur-xl p-5">
       <div className="flex items-center justify-between mb-3">
         <Skeleton className="h-10 w-10 rounded-xl" />
         <Skeleton className="h-4 w-4 rounded" />
@@ -173,7 +173,7 @@ export default function AdminDashboard() {
                 transition={{ delay: index * 0.05 }}
               >
                 <Link href={stat.href}>
-                  <div className="rounded-2xl border bg-card p-5 hover:shadow-md transition-shadow">
+                  <div className="rounded-2xl border bg-card/80 backdrop-blur-xl p-5 cursor-pointer hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5 transition-all duration-300">
                     <div className="flex items-center justify-between mb-3">
                       <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${stat.color}`}>
                         <stat.icon className="h-5 w-5" />
@@ -194,7 +194,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Recent Orders */}
-      <div className="rounded-2xl border bg-card">
+      <div className="rounded-2xl border bg-card/80 backdrop-blur-xl">
         <div className="flex items-center justify-between p-5 border-b">
           <h2 className="font-semibold">Recent Orders</h2>
           <Link href="/admin/orders" className="text-sm text-primary hover:underline">
@@ -228,7 +228,7 @@ export default function AdminDashboard() {
                     <TableRowSkeleton key={index} />
                   ))
                 : recentOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-muted/30 transition-colors">
+                    <tr key={order.id} className="hover:bg-muted/40 transition-colors rounded-lg">
                       <td className="px-5 py-3.5 text-sm font-medium">{order.orderNumber}</td>
                       <td className="px-5 py-3.5">
                         <div>
@@ -256,7 +256,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Low Stock Products */}
-      <div className="rounded-2xl border bg-card">
+      <div className="rounded-2xl border bg-card/80 backdrop-blur-xl">
         <div className="flex items-center justify-between p-5 border-b">
           <h2 className="font-semibold">Low Stock Alert</h2>
           <Link href="/admin/products" className="text-sm text-primary hover:underline">
@@ -269,7 +269,7 @@ export default function AdminDashboard() {
                 <LowStockRowSkeleton key={index} />
               ))
             : lowStockProducts.map((product) => (
-                <div key={product.id} className="flex items-center justify-between px-5 py-3">
+                <div key={product.id} className="flex items-center justify-between px-5 py-3 hover:bg-muted/40 transition-colors">
                   <div>
                     <p className="text-sm font-medium">{product.title}</p>
                     <p className="text-xs text-muted-foreground">{formatPrice(product.price)}</p>

@@ -25,9 +25,9 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.4, delay: index * 0.1 }}
-            className="rounded-2xl border bg-card p-6 relative"
+            className="rounded-2xl border bg-card p-6 relative hover:bg-card/80 hover:backdrop-blur-xl hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 cursor-pointer"
           >
-            <Quote className="absolute top-4 right-4 h-8 w-8 text-primary/10" />
+            <Quote aria-hidden="true" className="absolute top-4 right-4 h-8 w-8 text-primary/15 drop-shadow-sm" />
             <div className="flex items-center gap-3 mb-4">
               <div className="relative h-10 w-10 rounded-full overflow-hidden">
                 <Image
@@ -40,14 +40,15 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
               </div>
               <div>
                 <p className="text-sm font-semibold">{testimonial.name}</p>
-                <div className="flex gap-0.5">
+                <div className="flex gap-0.5" role="img" aria-label={`Rated ${testimonial.rating} out of 5 stars`}>
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
+                      aria-hidden="true"
                       className={`h-3 w-3 ${
                         i < testimonial.rating
-                          ? "fill-amber-400 text-amber-400"
-                          : "fill-muted text-muted"
+                          ? "fill-amber-400 text-amber-400 drop-shadow-sm"
+                          : "fill-muted text-muted-foreground/30"
                       }`}
                     />
                   ))}

@@ -29,9 +29,9 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
           >
             <Link
               href={`/shop?category=${category.slug}`}
-              className="group relative flex flex-col items-center justify-center gap-3 rounded-2xl border bg-card p-6 transition-all hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 hover:border-primary/20"
+              className="group relative flex flex-col items-center justify-center gap-3 rounded-2xl border bg-card p-6 transition-all hover:bg-card/80 hover:backdrop-blur-xl hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 hover:border-primary/30 cursor-pointer"
             >
-              <div className="relative h-20 w-20 rounded-2xl overflow-hidden bg-muted">
+              <div className="relative h-20 w-20 rounded-xl overflow-hidden bg-gradient-to-br from-muted/50 to-muted">
                 <Image
                   src={category.image}
                   alt={category.name}

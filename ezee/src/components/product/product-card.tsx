@@ -49,7 +49,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
       transition={{ duration: 0.4, delay: index * 0.05 }}
     >
       <Link href={`/product/${product.slug}`} className="group block">
-        <div className="relative overflow-hidden rounded-2xl border bg-card transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1">
+        <div className="relative overflow-hidden rounded-2xl border bg-card transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 cursor-pointer">
           {/* Image */}
           <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-muted/50 to-muted">
             <Image
@@ -57,7 +57,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               alt={product.title}
               fill
               className={cn(
-                "object-cover transition-transform duration-500 group-hover:scale-110",
+                "object-cover transition-transform duration-500 group-hover:scale-105",
                 isOutOfStock && "opacity-50 grayscale"
               )}
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -66,19 +66,19 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
             {/* Badges */}
             <div className="absolute top-3 left-3 flex flex-col gap-1.5">
               {hasDiscount && !isOutOfStock && (
-                <Badge className="bg-red-500 hover:bg-red-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-lg shadow-lg">
+                <Badge className="bg-red-500/90 hover:bg-red-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full shadow-lg backdrop-blur-sm">
                   {product.discountType === "percentage"
                     ? `${product.discount}% OFF`
                     : `${formatPrice(product.discount)} OFF`}
                 </Badge>
               )}
               {product.newArrival && (
-                <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-lg">
+                <Badge className="bg-emerald-500/90 hover:bg-emerald-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full backdrop-blur-sm">
                   NEW
                 </Badge>
               )}
               {product.bestSeller && (
-                <Badge className="bg-amber-500 hover:bg-amber-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-lg">
+                <Badge className="bg-amber-500/90 hover:bg-amber-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full backdrop-blur-sm">
                   BESTSELLER
                 </Badge>
               )}
@@ -92,25 +92,27 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
               </div>
             )}
 
-            {/* Hover Actions */}
-            <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 p-3">
+            {/* Action Buttons */}
+            <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 group-focus-within:translate-y-0 transition-transform duration-300 p-3">
               <div className="flex gap-2">
                 <Button
                   size="sm"
                   variant="secondary"
-                  className="flex-1 rounded-xl backdrop-blur-md bg-background/90 hover:bg-background shadow-lg text-xs h-9"
+                  className="flex-1 rounded-xl backdrop-blur-xl bg-background/80 hover:bg-background border border-white/10 shadow-lg text-xs h-9 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:translate-y-0"
                   onClick={handleAddToCart}
                   disabled={isOutOfStock}
+                  aria-label={`Add ${product.title} to cart`}
                 >
-                  <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                  <ShoppingCart className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
                   Add to Cart
                 </Button>
                 <Button
                   size="icon"
                   variant="secondary"
-                  className="h-9 w-9 rounded-xl backdrop-blur-md bg-background/90 hover:bg-background shadow-lg"
+                  className="h-9 w-9 rounded-xl backdrop-blur-xl bg-background/80 hover:bg-background border border-white/10 shadow-lg focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:translate-y-0"
+                  aria-label={`Quick view ${product.title}`}
                 >
-                  <Eye className="h-3.5 w-3.5" />
+                  <Eye className="h-3.5 w-3.5" aria-hidden="true" />
                 </Button>
               </div>
             </div>
@@ -127,7 +129,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
 
             {/* Price */}
             <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-lg font-bold text-primary">
+              <span className="text-xl font-bold text-primary">
                 {formatPrice(discountedPrice)}
               </span>
               {hasDiscount && (
@@ -139,7 +141,8 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
 
             {/* Stock indicator */}
             {product.stock > 0 && product.stock <= 5 && (
-              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400 font-medium">
+              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true" />
                 Only {product.stock} left!
               </p>
             )}

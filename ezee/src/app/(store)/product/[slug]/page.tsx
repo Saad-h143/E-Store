@@ -125,15 +125,15 @@ export default function ProductDetailPage() {
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
         <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
-        <ChevronRight className="h-3.5 w-3.5" />
+        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
         <Link href="/shop" className="hover:text-foreground transition-colors">Shop</Link>
-        <ChevronRight className="h-3.5 w-3.5" />
+        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
         {category && (
           <>
             <Link href={`/shop?category=${category.slug}`} className="hover:text-foreground transition-colors">
               {category.name}
             </Link>
-            <ChevronRight className="h-3.5 w-3.5" />
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
           </>
         )}
         <span className="text-foreground font-medium truncate">{product.title}</span>
@@ -182,7 +182,7 @@ export default function ProductDetailPage() {
         {/* Product Info */}
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
           <div>
-            {category && <p className="text-sm font-medium text-primary mb-2 uppercase tracking-wider">{category.name}</p>}
+            {category && <p className="text-sm font-medium bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent mb-2 uppercase tracking-wider">{category.name}</p>}
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{product.title}</h1>
             <div className="flex items-center gap-2 mt-3">
               <div className="flex gap-0.5">
@@ -195,7 +195,7 @@ export default function ProductDetailPage() {
           </div>
 
           <div className="flex items-baseline gap-3">
-            <span className="text-3xl font-bold text-primary">{formatPrice(discountedPrice)}</span>
+            <span className="text-4xl font-bold text-primary">{formatPrice(discountedPrice)}</span>
             {hasDiscount && (
               <>
                 <span className="text-lg text-muted-foreground line-through">{formatPrice(product.price)}</span>
@@ -248,7 +248,7 @@ export default function ProductDetailPage() {
             )}
 
             <div className="flex gap-3">
-              <Button size="lg" className="flex-1 h-12 rounded-xl text-sm font-semibold" disabled={isOutOfStock || !isAuthenticated} onClick={handleAddToCart}>
+              <Button size="lg" className="flex-1 h-12 rounded-xl text-sm font-semibold bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 text-white" disabled={isOutOfStock || !isAuthenticated} onClick={handleAddToCart}>
                 <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
               </Button>
               <Button size="lg" variant="secondary" className="flex-1 h-12 rounded-xl text-sm font-semibold" disabled={isOutOfStock || !isAuthenticated} onClick={handleBuyNow}>
@@ -279,16 +279,16 @@ export default function ProductDetailPage() {
       {/* Tabs */}
       <div className="mt-12">
         <Tabs defaultValue="specs">
-          <TabsList className="w-full justify-start rounded-xl h-12 p-1 bg-muted/50">
-            <TabsTrigger value="specs" className="rounded-lg">Specifications</TabsTrigger>
-            <TabsTrigger value="description" className="rounded-lg">Description</TabsTrigger>
-            <TabsTrigger value="reviews" className="rounded-lg">Reviews</TabsTrigger>
+          <TabsList className="w-full justify-start rounded-xl h-12 p-1 bg-muted/50 backdrop-blur-sm">
+            <TabsTrigger value="specs" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Specifications</TabsTrigger>
+            <TabsTrigger value="description" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Description</TabsTrigger>
+            <TabsTrigger value="reviews" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Reviews</TabsTrigger>
           </TabsList>
           <TabsContent value="specs" className="mt-6">
             {product.specs && Object.keys(product.specs).length > 0 && (
               <div className="rounded-2xl border bg-card overflow-hidden">
                 {Object.entries(product.specs).map(([key, value], index) => (
-                  <div key={key} className={cn("flex items-center px-6 py-4", index % 2 === 0 ? "bg-muted/30" : "")}>
+                  <div key={key} className={cn("flex items-center px-6 py-4", index % 2 === 0 ? "bg-muted/30" : "bg-background")}>
                     <span className="w-40 text-sm font-medium text-muted-foreground">{key}</span>
                     <span className="text-sm">{value}</span>
                   </div>

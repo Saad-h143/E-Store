@@ -45,17 +45,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-primary/5 via-background to-purple-500/5 relative overflow-hidden">
+      <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-gradient-to-br from-primary/10 to-purple-500/10 blur-3xl" />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        <div className="rounded-2xl border bg-card p-8 shadow-lg">
+        <div className="rounded-2xl border bg-card/80 backdrop-blur-sm p-8 shadow-lg">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
-              <div className="h-12 w-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center">
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-purple-600 text-white flex items-center justify-center">
                 <Smartphone className="h-6 w-6" />
               </div>
             </div>
@@ -110,7 +111,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full h-11 rounded-xl font-semibold"
+              className="w-full h-11 rounded-xl font-semibold bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 text-white"
               disabled={loading}
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

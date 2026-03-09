@@ -116,7 +116,7 @@ export default function AdminProductsPage() {
           </p>
         </div>
         <Link href="/admin/products/new">
-          <Button className="rounded-xl">
+          <Button className="rounded-xl bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 text-white">
             <Plus className="h-4 w-4 mr-2" />
             Add Product
           </Button>
@@ -150,7 +150,7 @@ export default function AdminProductsPage() {
       </div>
 
       {/* Product Table */}
-      <div className="rounded-2xl border bg-card overflow-hidden">
+      <div className="rounded-2xl border bg-card/80 backdrop-blur-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -184,7 +184,7 @@ export default function AdminProductsPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: index * 0.02 }}
-                    className="hover:bg-muted/30 transition-colors"
+                    className="hover:bg-muted/40 transition-all duration-200"
                   >
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
