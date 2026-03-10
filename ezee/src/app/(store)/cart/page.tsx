@@ -53,25 +53,39 @@ export default function CartPage() {
       image: item.product.images[0] || "",
     }));
 
-    const orderPromise = createOrder({
-      userId: user.id,
-      customerName: user.name,
-      customerEmail: user.email,
-      customerPhone: shippingInfo.phone,
-      items: orderItems,
-      total: grandTotal,
-      shippingAddress: shippingInfo.address,
-    });
+    try {
+      const order = await createOrder({
+        userId: user.id,
+        customerName: user.name,
+        customerEmail: user.email,
+        customerPhone: shippingInfo.phone,
+        items: orderItems,
+        total: grandTotal,
+        shippingAddress: shippingInfo.address,
+      });
 
-    // Clear cart and navigate immediately for fast UX
-    clearCart();
-    router.push("/account");
+      // Send email in background (don't await — let it run)
+      fetch("/api/email/order-confirmation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerName: user.name,
+          customerEmail: user.email,
+          orderNumber: order.orderNumber || order.id,
+          items: orderItems,
+          total: grandTotal,
+          shippingAddress: shippingInfo.address,
+        }),
+      }).catch(() => {});
 
-    toast.promise(orderPromise, {
-      loading: "Placing your order...",
-      success: "Order placed successfully!",
-      error: "Failed to place order. Please contact support.",
-    });
+      clearCart();
+      toast.success("Order placed successfully!");
+      router.push("/account");
+    } catch {
+      toast.error("Failed to place order. Please contact support.");
+    } finally {
+      setPlacingOrder(false);
+    }
   };
 
   if (items.length === 0) {

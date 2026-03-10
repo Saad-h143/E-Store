@@ -90,6 +90,22 @@ export default function AdminOrdersPage() {
 
     try {
       await updateOrderStatus(orderId, newStatus);
+
+      // Send status update email in background (fire-and-forget)
+      if (order) {
+        fetch("/api/email/status-update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customerName: order.customerName,
+            customerEmail: order.customerEmail,
+            orderNumber: order.orderNumber,
+            status: newStatus,
+            items: order.items,
+            total: order.total,
+          }),
+        }).catch(() => {}); // silent fail
+      }
     } catch {
       // Revert on failure
       if (prevStatus) {

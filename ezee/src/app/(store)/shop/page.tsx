@@ -241,7 +241,7 @@ function ShopContent() {
           onValueChange={(v) => setPriceRange(v as [number, number])}
           min={0}
           max={200000}
-          step={5000}
+          step={1000}
           className="mb-3"
         />
         <div className="flex items-center justify-between text-xs text-muted-foreground">

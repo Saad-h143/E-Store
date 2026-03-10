@@ -311,7 +311,7 @@ export function Navbar() {
                       </>
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive rounded-lg focus:text-destructive">
+                    <DropdownMenuItem onClick={() => { logout(); router.push("/"); }} className="cursor-pointer text-destructive rounded-lg focus:text-destructive">
                       <LogOut className="mr-2 h-4 w-4" /> Logout
                     </DropdownMenuItem>
                   </DropdownMenuContent>

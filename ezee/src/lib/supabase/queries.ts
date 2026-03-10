@@ -583,10 +583,11 @@ export async function createOrder(order: {
   total: number;
   shippingAddress: string;
 }) {
+  const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
   const { data, error } = await supabase
     .from("orders")
     .insert({
-      order_number: "",
+      order_number: orderNumber,
       user_id: order.userId,
       customer_name: order.customerName,
       customer_email: order.customerEmail,
