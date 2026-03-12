@@ -15,7 +15,6 @@ import {
   Sun,
   ChevronDown,
   ChevronRight,
-  Smartphone,
   Shield,
   LogOut,
   Package,
@@ -40,6 +39,7 @@ import { useAuthStore } from "@/store/auth-store";
 import { getCategories, getSubcategories } from "@/lib/supabase/queries";
 import type { Category, Subcategory } from "@/types";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/common/logo";
 
 const navLinks: { href: string; label: string }[] = [
   { href: "/", label: "Home" },
@@ -109,14 +109,8 @@ export function Navbar() {
           <div className="flex h-16 items-center justify-between gap-6">
 
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2.5 shrink-0 cursor-pointer group">
-              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-purple-500 to-purple-600 text-white shadow-lg shadow-primary/20 group-hover:shadow-xl group-hover:shadow-primary/30 transition-all duration-300 group-hover:scale-105">
-                <Smartphone className="h-4.5 w-4.5" />
-                <div className="absolute inset-0 rounded-xl bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </div>
-              <span className="text-xl font-bold tracking-tight text-foreground">
-                Ezee
-              </span>
+            <Link href="/" className="shrink-0 cursor-pointer group">
+              <Logo size="md" />
             </Link>
 
             {/* Desktop Navigation */}
@@ -318,7 +312,7 @@ export function Navbar() {
                 </DropdownMenu>
               ) : (
                 <Link href="/login" className="cursor-pointer ml-1">
-                  <Button size="sm" className="h-9 rounded-xl text-xs font-semibold cursor-pointer bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 hover:scale-[1.02]">
+                  <Button size="sm" className="h-9 px-5 rounded-xl text-xs font-semibold cursor-pointer bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 hover:scale-[1.02]">
                     <User className="mr-1.5 h-3.5 w-3.5" /> Sign In
                   </Button>
                 </Link>
@@ -333,11 +327,8 @@ export function Navbar() {
                 </SheetTrigger>
                 <SheetContent side="right" className="w-80 bg-background/98 backdrop-blur-2xl p-0">
                   <SheetHeader className="p-6 pb-4 border-b border-border/50">
-                    <SheetTitle className="flex items-center gap-2.5">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-purple-600 text-white shadow-md shadow-primary/20">
-                        <Smartphone className="h-4.5 w-4.5" />
-                      </div>
-                      <span className="text-lg font-bold">Ezee</span>
+                    <SheetTitle>
+                      <Logo size="sm" />
                     </SheetTitle>
                   </SheetHeader>
 

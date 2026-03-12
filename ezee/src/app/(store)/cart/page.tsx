@@ -64,14 +64,30 @@ export default function CartPage() {
         shippingAddress: shippingInfo.address,
       });
 
-      // Send email in background (don't await — let it run)
+      // Send email + WhatsApp in background (fire-and-forget)
+      const orderNum = order.orderNumber || order.id;
       fetch("/api/email/order-confirmation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customerName: user.name,
           customerEmail: user.email,
-          orderNumber: order.orderNumber || order.id,
+          orderNumber: orderNum,
+          items: orderItems,
+          total: grandTotal,
+          shippingAddress: shippingInfo.address,
+        }),
+      }).catch(() => {});
+
+      fetch("/api/whatsapp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "order-confirmation",
+          customerName: user.name,
+          customerEmail: user.email,
+          customerPhone: shippingInfo.phone,
+          orderNumber: orderNum,
           items: orderItems,
           total: grandTotal,
           shippingAddress: shippingInfo.address,

@@ -166,15 +166,15 @@ function ShopContent() {
     (dealsOnly ? 1 : 0) +
     (priceRange[0] > 0 || priceRange[1] < 200000 ? 1 : 0);
 
-  const FilterContent = () => (
-    <div className="space-y-6">
+  const FilterContent = ({ mobile = false }: { mobile?: boolean }) => (
+    <div className={mobile ? "space-y-5 px-1" : "space-y-6"}>
       {/* Categories */}
       <div>
         <h4 className="text-sm font-semibold mb-3">Brand</h4>
-        <div className="space-y-2.5">
+        <div className={mobile ? "space-y-1" : "space-y-2.5"}>
           {categoriesLoading
             ? Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-2.5">
+                <div key={i} className="flex items-center gap-3 py-1.5">
                   <div className="h-4 w-4 rounded bg-muted animate-pulse" />
                   <div className="h-3 w-24 rounded bg-muted animate-pulse" />
                 </div>
@@ -182,16 +182,21 @@ function ShopContent() {
             : categories.map((cat) => (
                 <label
                   key={cat.id}
-                  className="flex items-center gap-2.5 cursor-pointer group"
+                  className={`flex items-center gap-3 cursor-pointer group ${
+                    mobile
+                      ? "min-h-[44px] py-2 px-2 -mx-2 rounded-xl hover:bg-accent/50 active:bg-accent transition-colors"
+                      : ""
+                  }`}
                 >
                   <Checkbox
                     checked={selectedCategories.includes(cat.slug)}
                     onCheckedChange={() => toggleCategory(cat.slug)}
+                    className={mobile ? "h-5 w-5" : ""}
                   />
-                  <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                  <span className={`${mobile ? "text-[15px]" : "text-sm"} text-muted-foreground group-hover:text-foreground transition-colors`}>
                     {cat.name}
                   </span>
-                  <Badge variant="secondary" className="ml-auto text-xs">
+                  <Badge variant="secondary" className={`ml-auto ${mobile ? "text-xs px-2 py-0.5" : "text-xs"}`}>
                     {cat.productCount}
                   </Badge>
                 </label>
@@ -205,23 +210,29 @@ function ShopContent() {
           <Separator />
           <div>
             <h4 className="text-sm font-semibold mb-3">Subcategory</h4>
-            <div className="space-y-2.5">
-              <label className="flex items-center gap-2.5 cursor-pointer group">
+            <div className={mobile ? "space-y-1" : "space-y-2.5"}>
+              <label className={`flex items-center gap-3 cursor-pointer group ${
+                mobile ? "min-h-[44px] py-2 px-2 -mx-2 rounded-xl hover:bg-accent/50 active:bg-accent transition-colors" : ""
+              }`}>
                 <Checkbox
                   checked={!selectedSubcategory}
                   onCheckedChange={() => setSelectedSubcategory("")}
+                  className={mobile ? "h-5 w-5" : ""}
                 />
-                <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                <span className={`${mobile ? "text-[15px]" : "text-sm"} text-muted-foreground group-hover:text-foreground transition-colors`}>
                   All
                 </span>
               </label>
               {subcategories.map((sub) => (
-                <label key={sub.id} className="flex items-center gap-2.5 cursor-pointer group">
+                <label key={sub.id} className={`flex items-center gap-3 cursor-pointer group ${
+                  mobile ? "min-h-[44px] py-2 px-2 -mx-2 rounded-xl hover:bg-accent/50 active:bg-accent transition-colors" : ""
+                }`}>
                   <Checkbox
                     checked={selectedSubcategory === sub.slug}
                     onCheckedChange={() => setSelectedSubcategory(selectedSubcategory === sub.slug ? "" : sub.slug)}
+                    className={mobile ? "h-5 w-5" : ""}
                   />
-                  <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                  <span className={`${mobile ? "text-[15px]" : "text-sm"} text-muted-foreground group-hover:text-foreground transition-colors`}>
                     {sub.name}
                   </span>
                 </label>
@@ -235,36 +246,46 @@ function ShopContent() {
 
       {/* Price Range */}
       <div>
-        <h4 className="text-sm font-semibold mb-3">Price Range</h4>
-        <Slider
-          value={priceRange}
-          onValueChange={(v) => setPriceRange(v as [number, number])}
-          min={0}
-          max={200000}
-          step={1000}
-          className="mb-3"
-        />
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{formatPrice(priceRange[0])}</span>
-          <span>{formatPrice(priceRange[1])}</span>
+        <h4 className="text-sm font-semibold mb-4">Price Range</h4>
+        <div className={mobile ? "px-1" : ""}>
+          <Slider
+            value={priceRange}
+            onValueChange={(v) => setPriceRange(v as [number, number])}
+            min={0}
+            max={200000}
+            step={1000}
+            className="mb-3"
+          />
+        </div>
+        <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
+          <span className={mobile ? "text-sm font-medium bg-accent/60 px-2.5 py-1 rounded-lg" : ""}>{formatPrice(priceRange[0])}</span>
+          <span className={mobile ? "text-sm font-medium bg-accent/60 px-2.5 py-1 rounded-lg" : ""}>{formatPrice(priceRange[1])}</span>
         </div>
       </div>
 
       <Separator />
 
       {/* Deals Only */}
-      <label className="flex items-center gap-2.5 cursor-pointer">
+      <label className={`flex items-center gap-3 cursor-pointer ${
+        mobile ? "min-h-[44px] py-2 px-2 -mx-2 rounded-xl hover:bg-accent/50 active:bg-accent transition-colors" : ""
+      }`}>
         <Checkbox
           checked={dealsOnly}
           onCheckedChange={(checked) => setDealsOnly(checked === true)}
+          className={mobile ? "h-5 w-5" : ""}
         />
-        <span className="text-sm font-medium">Deals & Offers Only</span>
+        <span className={`${mobile ? "text-[15px]" : "text-sm"} font-medium`}>Deals & Offers Only</span>
       </label>
 
       {activeFilterCount > 0 && (
         <>
           <Separator />
-          <Button variant="outline" size="sm" className="w-full" onClick={clearFilters}>
+          <Button
+            variant="outline"
+            size={mobile ? "default" : "sm"}
+            className={`w-full cursor-pointer ${mobile ? "h-12 rounded-xl text-sm font-medium" : ""}`}
+            onClick={clearFilters}
+          >
             Clear All Filters
           </Button>
         </>
@@ -333,13 +354,28 @@ function ShopContent() {
                 )}
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-80">
-              <SheetHeader>
-                <SheetTitle>Filters</SheetTitle>
+            <SheetContent side="left" className="w-[min(85vw,340px)] p-0 flex flex-col">
+              <SheetHeader className="px-5 pt-5 pb-4 border-b border-border/50 shrink-0">
+                <div className="flex items-center justify-between">
+                  <SheetTitle className="text-lg">Filters</SheetTitle>
+                  {activeFilterCount > 0 && (
+                    <Badge className="text-xs">{activeFilterCount} active</Badge>
+                  )}
+                </div>
               </SheetHeader>
-              <div className="mt-6">
-                <FilterContent />
+              <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5">
+                <FilterContent mobile />
               </div>
+              {activeFilterCount > 0 && (
+                <div className="shrink-0 border-t border-border/50 p-4 bg-background/95 backdrop-blur-sm">
+                  <Button
+                    className="w-full h-12 rounded-xl font-semibold cursor-pointer bg-gradient-to-r from-primary to-purple-600 text-white"
+                    onClick={() => setMobileFiltersOpen(false)}
+                  >
+                    Show {filtered.length} Result{filtered.length !== 1 ? "s" : ""}
+                  </Button>
+                </div>
+              )}
             </SheetContent>
           </Sheet>
         </div>

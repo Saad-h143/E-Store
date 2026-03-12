@@ -91,7 +91,7 @@ export default function AdminOrdersPage() {
     try {
       await updateOrderStatus(orderId, newStatus);
 
-      // Send status update email in background (fire-and-forget)
+      // Send email status update in background (fire-and-forget)
       if (order) {
         fetch("/api/email/status-update", {
           method: "POST",
@@ -104,7 +104,7 @@ export default function AdminOrdersPage() {
             items: order.items,
             total: order.total,
           }),
-        }).catch(() => {}); // silent fail
+        }).catch(() => {});
       }
     } catch {
       // Revert on failure
