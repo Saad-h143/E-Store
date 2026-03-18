@@ -189,6 +189,15 @@
   flex: 0 0 100%;
 }
 
+/* Hide scrollbar but keep scroll functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   * {

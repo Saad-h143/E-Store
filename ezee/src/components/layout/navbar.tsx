@@ -57,6 +57,7 @@ export function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategoriesMap, setSubcategoriesMap] = useState<Record<string, Subcategory[]>>({});
+  const [expandedCat, setExpandedCat] = useState<string | null>(null);
 
   const itemCount = useCartStore((s) => s.getItemCount());
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -119,7 +120,7 @@ export function Navbar() {
                 <React.Fragment key={link.href}>
                   {/* Categories dropdown inserted before Contact */}
                   {i === 2 && (
-                    <DropdownMenu>
+                    <DropdownMenu onOpenChange={(open) => { if (!open) setExpandedCat(null); }}>
                       <DropdownMenuTrigger asChild>
                         <button className="flex items-center gap-1 px-3.5 py-2 text-sm font-medium rounded-xl transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2">
                           Categories
@@ -134,11 +135,21 @@ export function Navbar() {
                         <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 pb-2">
                           Browse by Brand
                         </DropdownMenuLabel>
-                        {categories.map((cat) => (
+                        {categories.map((cat) => {
+                          const subs = subcategoriesMap[cat.id] || [];
+                          const isExpanded = expandedCat === cat.id;
+                          return (
                           <DropdownMenuGroup key={cat.id}>
                             <DropdownMenuItem
                               className="cursor-pointer flex items-center justify-between rounded-lg px-3 py-2.5 focus:bg-primary/10 focus:text-primary"
-                              onSelect={() => router.push(`/shop?category=${cat.slug}`)}
+                              onSelect={(e) => {
+                                if (subs.length > 0) {
+                                  e.preventDefault();
+                                  setExpandedCat(isExpanded ? null : cat.id);
+                                } else {
+                                  router.push(`/shop?category=${cat.slug}`);
+                                }
+                              }}
                             >
                               <div className="flex items-center gap-2.5">
                                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -150,14 +161,18 @@ export function Navbar() {
                                 <Badge variant="secondary" className="text-[10px] font-semibold px-1.5 py-0 h-5 rounded-md">
                                   {cat.productCount}
                                 </Badge>
-                                {(subcategoriesMap[cat.id] || []).length === 0 && (
-                                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-                                )}
+                                <ChevronRight className={cn("h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200", isExpanded && "rotate-90")} />
                               </div>
                             </DropdownMenuItem>
-                            {(subcategoriesMap[cat.id] || []).length > 0 && (
+                            {subs.length > 0 && isExpanded && (
                               <div className="ml-9 mr-2 mb-1.5 pl-3 border-l-2 border-primary/10">
-                                {(subcategoriesMap[cat.id] || []).map((sub) => (
+                                <DropdownMenuItem
+                                  className="cursor-pointer text-foreground text-xs py-1.5 px-2 rounded-md font-medium hover:text-foreground focus:bg-primary/5 focus:text-primary"
+                                  onSelect={() => router.push(`/shop?category=${cat.slug}`)}
+                                >
+                                  All {cat.name}
+                                </DropdownMenuItem>
+                                {subs.map((sub) => (
                                   <DropdownMenuItem
                                     key={sub.id}
                                     className="cursor-pointer text-muted-foreground text-xs py-1.5 px-2 rounded-md hover:text-foreground focus:bg-primary/5 focus:text-primary"
@@ -169,7 +184,8 @@ export function Navbar() {
                               </div>
                             )}
                           </DropdownMenuGroup>
-                        ))}
+                          );
+                        })}
                         <DropdownMenuSeparator className="my-1.5" />
                         <DropdownMenuItem
                           className="cursor-pointer rounded-lg px-3 py-2 text-sm font-medium text-primary focus:bg-primary/10"
@@ -206,18 +222,18 @@ export function Navbar() {
 
             {/* Right Side Actions */}
             <div className="flex items-center gap-0.5">
-              {/* Search */}
+              {/* Search - desktop only */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 rounded-xl cursor-pointer hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-primary/50 transition-all duration-200"
+                className="hidden md:inline-flex h-9 w-9 rounded-xl cursor-pointer hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-primary/50 transition-all duration-200"
                 onClick={() => setSearchOpen(!searchOpen)}
                 aria-label="Toggle search"
               >
                 <Search className="h-4 w-4" />
               </Button>
 
-              {/* Theme Toggle */}
+              {/* Theme Toggle - always visible */}
               {mounted && (
                 <Button
                   variant="ghost"
@@ -244,11 +260,11 @@ export function Navbar() {
                 </Button>
               )}
 
-              {/* Separator */}
-              <div className="hidden sm:block w-px h-6 bg-border/60 mx-1.5" />
+              {/* Separator - desktop only */}
+              <div className="hidden md:block w-px h-6 bg-border/60 mx-1.5" />
 
-              {/* Cart */}
-              <Link href="/cart" className="cursor-pointer">
+              {/* Cart - desktop only */}
+              <Link href="/cart" className="hidden md:block cursor-pointer">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -268,11 +284,11 @@ export function Navbar() {
                 </Button>
               </Link>
 
-              {/* User Menu */}
+              {/* User Menu - desktop only */}
               {isAuthenticated && user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl cursor-pointer hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-primary/50">
+                    <Button variant="ghost" size="icon" className="hidden md:inline-flex h-9 w-9 rounded-xl cursor-pointer hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-primary/50">
                       <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-primary to-purple-600 text-white text-xs font-bold ring-2 ring-background shadow-sm">
                         {user.name.charAt(0).toUpperCase()}
                       </div>
@@ -311,7 +327,7 @@ export function Navbar() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Link href="/login" className="cursor-pointer ml-1">
+                <Link href="/login" className="hidden md:block cursor-pointer ml-1">
                   <Button size="sm" className="h-9 px-5 rounded-xl text-xs font-semibold cursor-pointer bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 hover:scale-[1.02]">
                     <User className="mr-1.5 h-3.5 w-3.5" /> Sign In
                   </Button>
@@ -321,18 +337,81 @@ export function Navbar() {
               {/* Mobile Menu Trigger */}
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild className="md:hidden">
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl cursor-pointer hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-primary/50" aria-label="Open menu">
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl cursor-pointer hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-primary/50 relative" aria-label="Open menu">
                     <Menu className="h-4 w-4" />
+                    {/* Cart badge on hamburger for mobile */}
+                    {itemCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-[16px] w-[16px] items-center justify-center rounded-full bg-gradient-to-br from-primary to-purple-600 text-[9px] font-bold text-white ring-2 ring-background">
+                        {itemCount > 9 ? "9+" : itemCount}
+                      </span>
+                    )}
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-80 bg-background/98 backdrop-blur-2xl p-0">
-                  <SheetHeader className="p-6 pb-4 border-b border-border/50">
+                <SheetContent side="right" className="w-80 bg-background/98 backdrop-blur-2xl p-0 flex flex-col">
+                  <SheetHeader className="p-6 pb-4 border-b border-border/50 shrink-0">
                     <SheetTitle>
                       <Logo size="sm" />
                     </SheetTitle>
                   </SheetHeader>
 
-                  <nav className="p-4 flex flex-col gap-1">
+                  {/* User info at top of mobile menu */}
+                  {isAuthenticated && user && (
+                    <div className="px-5 py-4 border-b border-border/50">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-purple-600 text-white text-sm font-bold shadow-sm">
+                          {user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold truncate">{user.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <nav className="flex-1 overflow-y-auto p-4 flex flex-col gap-1">
+                    {/* Search inside mobile menu */}
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const val = (e.target as HTMLFormElement).search.value;
+                        if (val.trim()) {
+                          window.location.href = `/shop?search=${encodeURIComponent(val.trim())}`;
+                          setMobileOpen(false);
+                        }
+                      }}
+                      className="relative mb-3"
+                    >
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        name="search"
+                        placeholder="Search products..."
+                        className="pl-10 h-11 rounded-xl bg-accent/40 border-border/40"
+                      />
+                    </form>
+
+                    {/* Cart link in mobile menu */}
+                    <Link
+                      href="/cart"
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        "px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer flex items-center justify-between",
+                        pathname === "/cart"
+                          ? "bg-gradient-to-r from-primary/15 to-purple-600/10 text-primary"
+                          : "text-muted-foreground hover:bg-accent/80 hover:text-foreground active:scale-[0.98]"
+                      )}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <ShoppingCart className="h-4 w-4" />
+                        Cart
+                      </div>
+                      {itemCount > 0 && (
+                        <Badge className="bg-gradient-to-r from-primary to-purple-600 text-white text-[10px] px-2 py-0 h-5 rounded-full border-0">
+                          {itemCount}
+                        </Badge>
+                      )}
+                    </Link>
+
                     {navLinks.map((link) => (
                       <Link
                         key={link.href}
@@ -354,12 +433,22 @@ export function Navbar() {
                       <div className="flex-1 h-px bg-border/50" />
                     </div>
 
-                    {categories.map((cat) => (
+                    {categories.map((cat) => {
+                      const subs = subcategoriesMap[cat.id] || [];
+                      const isExpanded = expandedCat === cat.id;
+                      return (
                       <div key={cat.id}>
-                        <Link
-                          href={`/shop?category=${cat.slug}`}
-                          onClick={() => setMobileOpen(false)}
-                          className="px-4 py-2.5 rounded-xl text-sm text-foreground/80 hover:bg-accent/80 hover:text-foreground transition-all duration-200 cursor-pointer flex items-center justify-between active:scale-[0.98]"
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (subs.length > 0) {
+                              setExpandedCat(isExpanded ? null : cat.id);
+                            } else {
+                              router.push(`/shop?category=${cat.slug}`);
+                              setMobileOpen(false);
+                            }
+                          }}
+                          className="w-full px-4 py-2.5 rounded-xl text-sm text-foreground/80 hover:bg-accent/80 hover:text-foreground transition-all duration-200 cursor-pointer flex items-center justify-between active:scale-[0.98]"
                         >
                           <div className="flex items-center gap-2.5">
                             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-primary">
@@ -367,22 +456,47 @@ export function Navbar() {
                             </div>
                             {cat.name}
                           </div>
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 rounded-md">
-                            {cat.productCount}
-                          </Badge>
-                        </Link>
-                        {(subcategoriesMap[cat.id] || []).map((sub) => (
-                          <Link
-                            key={sub.id}
-                            href={`/shop?category=${cat.slug}&subcategory=${sub.slug}`}
-                            onClick={() => setMobileOpen(false)}
-                            className="ml-11 px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:bg-accent/60 hover:text-foreground transition-all duration-200 cursor-pointer block"
-                          >
-                            {sub.name}
-                          </Link>
-                        ))}
+                          <div className="flex items-center gap-1.5">
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 rounded-md">
+                              {cat.productCount}
+                            </Badge>
+                            {subs.length > 0 && (
+                              <ChevronRight className={cn("h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-200", isExpanded && "rotate-90")} />
+                            )}
+                          </div>
+                        </button>
+                        <AnimatePresence>
+                          {subs.length > 0 && isExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="overflow-hidden"
+                            >
+                              <Link
+                                href={`/shop?category=${cat.slug}`}
+                                onClick={() => setMobileOpen(false)}
+                                className="ml-11 px-3 py-1.5 rounded-lg text-xs font-medium text-foreground hover:bg-accent/60 transition-all duration-200 cursor-pointer block"
+                              >
+                                All {cat.name}
+                              </Link>
+                              {subs.map((sub) => (
+                                <Link
+                                  key={sub.id}
+                                  href={`/shop?category=${cat.slug}&subcategory=${sub.slug}`}
+                                  onClick={() => setMobileOpen(false)}
+                                  className="ml-11 px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:bg-accent/60 hover:text-foreground transition-all duration-200 cursor-pointer block"
+                                >
+                                  {sub.name}
+                                </Link>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
-                    ))}
+                      );
+                    })}
 
                     {isAdmin && (
                       <>
@@ -403,6 +517,32 @@ export function Navbar() {
                       </>
                     )}
                   </nav>
+
+                  {/* Bottom action - Sign In / Account / Logout */}
+                  <div className="shrink-0 border-t border-border/50 p-4">
+                    {isAuthenticated && user ? (
+                      <div className="flex gap-2">
+                        <Link href="/account" onClick={() => setMobileOpen(false)} className="flex-1">
+                          <Button variant="outline" className="w-full h-11 rounded-xl text-sm font-medium cursor-pointer">
+                            <User className="mr-2 h-4 w-4" /> Account
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="outline"
+                          className="h-11 rounded-xl text-sm font-medium cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => { logout(); setMobileOpen(false); router.push("/"); }}
+                        >
+                          <LogOut className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Link href="/login" onClick={() => setMobileOpen(false)}>
+                        <Button className="w-full h-11 rounded-xl text-sm font-semibold cursor-pointer bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white shadow-md shadow-primary/20">
+                          <User className="mr-2 h-4 w-4" /> Sign In
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                 </SheetContent>
               </Sheet>
             </div>

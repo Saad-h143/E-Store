@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +54,8 @@ function ShopContent() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PRODUCTS_PER_PAGE = 8;
 
   // Debounce timer ref for search input
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -145,6 +147,18 @@ function ShopContent() {
     return true;
   });
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, selectedCategories, selectedSubcategory, sortBy, dealsOnly, priceRange]);
+
+  // Scroll to top when page changes
+  useEffect(() => {
+    if (currentPage > 1) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [currentPage]);
+
   const toggleCategory = (slug: string) => {
     setSelectedCategories((prev) =>
       prev.includes(slug) ? prev.filter((c) => c !== slug) : [...prev, slug]
@@ -158,6 +172,7 @@ function ShopContent() {
     setPriceRange([0, 200000]);
     setSortBy("featured");
     setDealsOnly(false);
+    setCurrentPage(1);
   };
 
   const activeFilterCount =
@@ -294,7 +309,7 @@ function ShopContent() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+    <div className="mx-auto max-w-7xl px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 overflow-x-hidden">
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight gradient-text">Shop</h1>
@@ -304,14 +319,14 @@ function ShopContent() {
       </div>
 
       {/* Search + Sort Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <div className="relative flex-1">
+      <div className="flex flex-col sm:flex-row gap-3 mb-6 min-w-0">
+        <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search phones..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 h-11 rounded-xl bg-background/60 backdrop-blur-sm"
+            className="pl-10 h-11 rounded-xl bg-background/60 backdrop-blur-sm w-full"
           />
           {search && (
             <Button
@@ -326,9 +341,9 @@ function ShopContent() {
           )}
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 min-w-0">
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[180px] h-11 rounded-xl">
+            <SelectTrigger className="w-[140px] sm:w-[180px] h-11 rounded-xl shrink-0">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
@@ -424,31 +439,136 @@ function ShopContent() {
       {/* Main Content */}
       <div className="flex gap-8">
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:block w-64 shrink-0">
-          <div className="sticky top-20 rounded-2xl border bg-card/80 backdrop-blur-sm p-5">
-            <h3 className="text-sm font-semibold mb-4">Filters</h3>
-            <FilterContent />
+        <aside className="hidden lg:block w-[260px] shrink-0">
+          <div className="sticky top-20 rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm overflow-hidden shadow-sm">
+            <div className="bg-gradient-to-r from-primary to-purple-600 px-5 py-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-white tracking-wide">Filters</h3>
+                {activeFilterCount > 0 && (
+                  <Badge className="bg-white/20 text-white text-[10px] font-bold border-0 backdrop-blur-sm">
+                    {activeFilterCount} active
+                  </Badge>
+                )}
+              </div>
+            </div>
+            <div className="p-5">
+              <FilterContent />
+            </div>
           </div>
         </aside>
 
         {/* Product Grid */}
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-5">
             <p className="text-sm text-muted-foreground">
               {loading
                 ? "Loading products..."
                 : `${filtered.length} product${filtered.length !== 1 ? "s" : ""} found`}
             </p>
+            {!loading && filtered.length > PRODUCTS_PER_PAGE && (
+              <p className="text-xs text-muted-foreground">
+                Page {currentPage} of {Math.ceil(filtered.length / PRODUCTS_PER_PAGE)}
+              </p>
+            )}
           </div>
 
           {loading ? (
-            <ProductGridSkeleton count={8} />
+            <ProductGridSkeleton count={12} />
           ) : filtered.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-              {filtered.map((product, index) => (
-                <ProductCard key={product.id} product={product} index={index} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-5">
+                {filtered
+                  .slice((currentPage - 1) * PRODUCTS_PER_PAGE, currentPage * PRODUCTS_PER_PAGE)
+                  .map((product, index) => (
+                    <ProductCard key={product.id} product={product} index={index} />
+                  ))}
+              </div>
+
+              {/* Pagination */}
+              {filtered.length > 0 && (
+                <div className="mt-10 flex items-center justify-center">
+                  <div className="flex items-center gap-1.5 bg-card/80 backdrop-blur-sm border border-border/50 rounded-2xl p-1.5 shadow-sm">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-xl cursor-pointer"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(1)}
+                      aria-label="First page"
+                    >
+                      <ChevronsLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-xl cursor-pointer"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      aria-label="Previous page"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+
+                    {Array.from({ length: Math.ceil(filtered.length / PRODUCTS_PER_PAGE) }).map((_, i) => {
+                      const page = i + 1;
+                      const totalPages = Math.ceil(filtered.length / PRODUCTS_PER_PAGE);
+                      // Show first, last, current, and adjacent pages
+                      if (
+                        page === 1 ||
+                        page === totalPages ||
+                        (page >= currentPage - 1 && page <= currentPage + 1)
+                      ) {
+                        return (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? "default" : "ghost"}
+                            size="icon"
+                            className={`h-9 w-9 rounded-xl text-xs font-semibold cursor-pointer ${
+                              currentPage === page
+                                ? "bg-gradient-to-r from-primary to-purple-600 text-white shadow-md shadow-primary/20"
+                                : ""
+                            }`}
+                            onClick={() => setCurrentPage(page)}
+                          >
+                            {page}
+                          </Button>
+                        );
+                      }
+                      // Show dots
+                      if (page === currentPage - 2 || page === currentPage + 2) {
+                        return (
+                          <span key={page} className="px-1 text-xs text-muted-foreground">
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    })}
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-xl cursor-pointer"
+                      disabled={currentPage === Math.ceil(filtered.length / PRODUCTS_PER_PAGE)}
+                      onClick={() => setCurrentPage((p) => Math.min(Math.ceil(filtered.length / PRODUCTS_PER_PAGE), p + 1))}
+                      aria-label="Next page"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-xl cursor-pointer"
+                      disabled={currentPage === Math.ceil(filtered.length / PRODUCTS_PER_PAGE)}
+                      onClick={() => setCurrentPage(Math.ceil(filtered.length / PRODUCTS_PER_PAGE))}
+                      aria-label="Last page"
+                    >
+                      <ChevronsRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <motion.div
               initial={{ opacity: 0 }}
@@ -462,7 +582,7 @@ function ShopContent() {
               <p className="text-sm text-muted-foreground mb-4">
                 Try adjusting your filters or search terms
               </p>
-              <Button variant="outline" onClick={clearFilters}>
+              <Button variant="outline" onClick={clearFilters} className="cursor-pointer">
                 Clear Filters
               </Button>
             </motion.div>

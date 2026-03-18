@@ -63,7 +63,7 @@ export function Footer() {
                 toast.success("Subscribed successfully! Check your email for confirmation.");
                 (e.target as HTMLFormElement).reset();
               }}
-              className="flex w-full max-w-md gap-2"
+              className="flex flex-col sm:flex-row w-full max-w-md gap-2"
             >
               <Input
                 type="email"

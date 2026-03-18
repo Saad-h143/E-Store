@@ -23,7 +23,10 @@
       "Bash(py --version)",
       "Bash(python skills/ui-ux-pro-max/scripts/search.py \"ecommerce login authentication modern premium\" --design-system -p \"Ezee Store\")",
       "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py \"ecommerce login authentication modern premium\" --design-system -p \"Ezee Store\")",
-      "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py \"touch target mobile filter responsive\" --domain ux -n 5)"
+      "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py \"touch target mobile filter responsive\" --domain ux -n 5)",
+      "Bash(npx next:*)",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(rm -rf .next)"
     ]
   }
 }
