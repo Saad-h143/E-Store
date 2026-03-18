@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -152,8 +153,12 @@ export function Navbar() {
                               }}
                             >
                               <div className="flex items-center gap-2.5">
-                                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                                  <Sparkles className="h-3.5 w-3.5" />
+                                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 overflow-hidden shrink-0">
+                                  {cat.image ? (
+                                    <Image src={cat.image} alt={cat.name} width={28} height={28} className="object-cover w-full h-full" />
+                                  ) : (
+                                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                                  )}
                                 </div>
                                 <span className="font-medium text-sm">{cat.name}</span>
                               </div>
@@ -451,8 +456,12 @@ export function Navbar() {
                           className="w-full px-4 py-2.5 rounded-xl text-sm text-foreground/80 hover:bg-accent/80 hover:text-foreground transition-all duration-200 cursor-pointer flex items-center justify-between active:scale-[0.98]"
                         >
                           <div className="flex items-center gap-2.5">
-                            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-primary">
-                              <Sparkles className="h-3 w-3" />
+                            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 overflow-hidden shrink-0">
+                              {cat.image ? (
+                                <Image src={cat.image} alt={cat.name} width={24} height={24} className="object-cover w-full h-full" />
+                              ) : (
+                                <Sparkles className="h-3 w-3 text-primary" />
+                              )}
                             </div>
                             {cat.name}
                           </div>

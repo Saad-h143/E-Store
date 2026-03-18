@@ -111,7 +111,7 @@ export default function AdminCategoriesPage() {
         name: newCategory.name,
         slug,
         description: newCategory.description,
-        image: newCategory.image || "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80",
+        image: newCategory.image || "",
       });
       setCategoryList((prev) => [...prev, cat]);
       setNewCategory({ name: "", description: "", image: "" });

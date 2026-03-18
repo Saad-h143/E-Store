@@ -102,7 +102,8 @@ export default function CartPage() {
       } else {
         router.push("/account#orders");
       }
-    } catch {
+    } catch (err) {
+      console.error("Order error:", err);
       toast.error("Failed to place order. Please contact support.");
     } finally {
       setPlacingOrder(false);

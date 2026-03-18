@@ -61,11 +61,11 @@ function baseLayout(title: string, content: string) {
 <body style="margin:0;padding:0;background:#f4f4f5;font-family:'Segoe UI',Roboto,sans-serif;">
   <div style="max-width:600px;margin:0 auto;padding:20px;">
     <!-- Header -->
-    <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:16px 16px 0 0;padding:32px 24px;text-align:center;">
-      <h1 style="margin:0;color:#fff;font-size:24px;font-weight:700;">Ezee Store</h1>
+    <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:16px 16px 0 0;padding:20px 24px;text-align:center;">
+      <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;">Ezee Store</h1>
     </div>
     <!-- Body -->
-    <div style="background:#fff;padding:32px 24px;border-radius:0 0 16px 16px;">
+    <div style="background:#fff;padding:24px 20px;border-radius:0 0 16px 16px;">
       ${content}
     </div>
     <!-- Footer -->
@@ -199,52 +199,52 @@ function adminOrderAlertHtml(data: OrderEmailData & { customerPhone: string }) {
   return baseLayout(
     "New Order Received",
     `
-    <div style="background:#fef3c7;border-radius:12px;padding:16px;margin-bottom:24px;text-align:center;">
-      <p style="margin:0;font-size:20px;font-weight:700;color:#b45309;">New Order Received!</p>
+    <div style="background:#fef3c7;border-radius:10px;padding:10px;margin-bottom:16px;text-align:center;">
+      <p style="margin:0;font-size:16px;font-weight:700;color:#b45309;">New Order Received!</p>
     </div>
 
-    <div style="background:#f4f4f5;border-radius:12px;padding:16px;margin-bottom:20px;">
-      <p style="margin:0;font-size:13px;color:#71717a;">Order Number</p>
-      <p style="margin:4px 0 0;font-size:18px;font-weight:700;color:#6366f1;">${data.orderNumber}</p>
+    <div style="background:#f4f4f5;border-radius:10px;padding:12px;margin-bottom:16px;">
+      <p style="margin:0;font-size:11px;color:#71717a;">Order Number</p>
+      <p style="margin:2px 0 0;font-size:15px;font-weight:700;color:#6366f1;">${data.orderNumber}</p>
     </div>
 
-    <h3 style="margin:0 0 12px;color:#18181b;font-size:16px;">Customer Details</h3>
-    <table style="width:100%;margin-bottom:20px;font-size:14px;">
+    <h3 style="margin:0 0 8px;color:#18181b;font-size:14px;">Customer Details</h3>
+    <table style="width:100%;margin-bottom:14px;font-size:13px;">
       <tr>
-        <td style="padding:6px 0;color:#71717a;width:100px;">Name</td>
-        <td style="padding:6px 0;font-weight:600;color:#18181b;">${data.customerName}</td>
+        <td style="padding:4px 0;color:#71717a;width:80px;">Name</td>
+        <td style="padding:4px 0;font-weight:600;color:#18181b;">${data.customerName}</td>
       </tr>
       <tr>
-        <td style="padding:6px 0;color:#71717a;">Email</td>
-        <td style="padding:6px 0;font-weight:600;color:#18181b;">${data.customerEmail}</td>
+        <td style="padding:4px 0;color:#71717a;">Email</td>
+        <td style="padding:4px 0;font-weight:600;color:#18181b;">${data.customerEmail}</td>
       </tr>
       <tr>
-        <td style="padding:6px 0;color:#71717a;">Phone</td>
-        <td style="padding:6px 0;font-weight:600;color:#18181b;">${data.customerPhone}</td>
+        <td style="padding:4px 0;color:#71717a;">Phone</td>
+        <td style="padding:4px 0;font-weight:600;color:#18181b;">${data.customerPhone}</td>
       </tr>
     </table>
 
-    <h3 style="margin:0 0 12px;color:#18181b;font-size:16px;">Items Ordered</h3>
+    <h3 style="margin:0 0 8px;color:#18181b;font-size:14px;">Items Ordered</h3>
     <table style="width:100%;border-collapse:collapse;">
       ${itemsHtml}
       <tr>
-        <td style="padding:16px 0 0;font-weight:700;font-size:16px;color:#18181b;">Total</td>
-        <td style="padding:16px 0 0;text-align:right;font-weight:700;font-size:16px;color:#6366f1;">${formatPrice(data.total)}</td>
+        <td style="padding:10px 0 0;font-weight:700;font-size:14px;color:#18181b;">Total</td>
+        <td style="padding:10px 0 0;text-align:right;font-weight:700;font-size:14px;color:#6366f1;">${formatPrice(data.total)}</td>
       </tr>
     </table>
 
-    <div style="margin-top:20px;padding:16px;background:#f0fdf4;border-radius:12px;border-left:4px solid #22c55e;">
-      <p style="margin:0;font-size:13px;color:#15803d;font-weight:600;">Ship To</p>
-      <p style="margin:4px 0 0;color:#166534;">${data.shippingAddress}</p>
+    <div style="margin-top:14px;padding:10px 12px;background:#f0fdf4;border-radius:10px;border-left:3px solid #22c55e;">
+      <p style="margin:0;font-size:11px;color:#15803d;font-weight:600;">Ship To</p>
+      <p style="margin:2px 0 0;color:#166534;font-size:13px;">${data.shippingAddress}</p>
     </div>
 
-    <div style="margin-top:24px;text-align:center;">
-      <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/admin/orders" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:14px 32px;border-radius:12px;">
+    <div style="margin-top:16px;text-align:center;">
+      <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/admin/orders" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;text-decoration:none;font-weight:700;font-size:13px;padding:10px 28px;border-radius:10px;">
         View Order in Dashboard
       </a>
     </div>
 
-    <p style="margin:20px 0 0;color:#71717a;font-size:12px;text-align:center;">
+    <p style="margin:12px 0 0;color:#71717a;font-size:11px;text-align:center;">
       ${new Date().toLocaleString("en-PK", { timeZone: "Asia/Karachi" })}
     </p>
   `

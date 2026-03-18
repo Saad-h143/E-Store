@@ -91,15 +91,44 @@ export default function AdminDashboard() {
   }, []);
 
   const stats = useMemo(() => {
+    const now = new Date();
+    const thisMonth = now.getMonth();
+    const thisYear = now.getFullYear();
+    const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const lastMonthStart = new Date(thisYear, thisMonth - 1, 1);
+    const lastMonthEnd = new Date(thisYear, thisMonth, 0);
+    const thisMonthStart = new Date(thisYear, thisMonth, 1);
+
     const lowStockCount = products.filter((p) => p.stock <= 5 && p.stock > 0).length;
+    const outOfStockCount = products.filter((p) => p.stock === 0).length;
     const revenue = orders.reduce((a, o) => a + o.total, 0);
+
+    // Orders this week
+    const ordersThisWeek = orders.filter((o) => new Date(o.createdAt) >= last7Days).length;
+
+    // Revenue this month vs last month
+    const revenueThisMonth = orders
+      .filter((o) => new Date(o.createdAt) >= thisMonthStart)
+      .reduce((a, o) => a + o.total, 0);
+    const revenueLastMonth = orders
+      .filter((o) => {
+        const d = new Date(o.createdAt);
+        return d >= lastMonthStart && d <= lastMonthEnd;
+      })
+      .reduce((a, o) => a + o.total, 0);
+    const revenueChange = revenueLastMonth > 0
+      ? Math.round(((revenueThisMonth - revenueLastMonth) / revenueLastMonth) * 100)
+      : revenueThisMonth > 0 ? 100 : 0;
+
+    // Products added this month
+    const pendingOrders = orders.filter((o) => o.status === "pending").length;
 
     return [
       {
         title: "Total Products",
         value: products.length.toString(),
-        change: "+2 this month",
-        trend: "up" as const,
+        change: outOfStockCount > 0 ? `${outOfStockCount} out of stock` : "All in stock",
+        trend: (outOfStockCount > 0 ? "down" : "up") as "up" | "down",
         icon: Package,
         href: "/admin/products",
         color: "text-blue-600 bg-blue-500/10",
@@ -107,8 +136,8 @@ export default function AdminDashboard() {
       {
         title: "Total Orders",
         value: orders.length.toString(),
-        change: "+3 this week",
-        trend: "up" as const,
+        change: `${ordersThisWeek} this week${pendingOrders > 0 ? ` · ${pendingOrders} pending` : ""}`,
+        trend: (ordersThisWeek > 0 ? "up" : "down") as "up" | "down",
         icon: ShoppingCart,
         href: "/admin/orders",
         color: "text-emerald-600 bg-emerald-500/10",
@@ -116,8 +145,8 @@ export default function AdminDashboard() {
       {
         title: "Low Stock Items",
         value: lowStockCount.toString(),
-        change: "Needs attention",
-        trend: "down" as const,
+        change: lowStockCount > 0 ? "Needs attention" : "All stocked",
+        trend: (lowStockCount > 0 ? "down" : "up") as "up" | "down",
         icon: AlertTriangle,
         href: "/admin/products",
         color: "text-amber-600 bg-amber-500/10",
@@ -125,8 +154,8 @@ export default function AdminDashboard() {
       {
         title: "Revenue",
         value: formatPrice(revenue),
-        change: "+12% vs last month",
-        trend: "up" as const,
+        change: revenueChange >= 0 ? `+${revenueChange}% vs last month` : `${revenueChange}% vs last month`,
+        trend: (revenueChange >= 0 ? "up" : "down") as "up" | "down",
         icon: TrendingUp,
         href: "/admin/orders",
         color: "text-purple-600 bg-purple-500/10",
