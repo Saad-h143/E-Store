@@ -72,6 +72,7 @@ export default function CartPage() {
         body: JSON.stringify({
           customerName: user.name,
           customerEmail: user.email,
+          customerPhone: shippingInfo.phone,
           orderNumber: orderNum,
           items: orderItems,
           total: grandTotal,
@@ -96,7 +97,11 @@ export default function CartPage() {
 
       clearCart();
       toast.success("Order placed successfully!");
-      router.push("/account");
+      if (user.role === "admin") {
+        router.push("/admin/orders");
+      } else {
+        router.push("/account#orders");
+      }
     } catch {
       toast.error("Failed to place order. Please contact support.");
     } finally {

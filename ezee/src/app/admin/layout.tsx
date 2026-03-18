@@ -16,6 +16,7 @@ import {
   Moon,
   Sun,
   Home,
+  Users,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ const navItems = [
   { href: "/admin/orders", icon: ShoppingCart, label: "Orders" },
   { href: "/admin/categories", icon: FolderTree, label: "Categories" },
   { href: "/admin/banners", icon: ImageIcon, label: "Banners" },
+  { href: "/admin/users", icon: Users, label: "Users" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

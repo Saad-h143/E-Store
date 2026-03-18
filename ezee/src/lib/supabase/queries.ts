@@ -616,6 +616,23 @@ export async function updateOrderStatus(id: string, status: Order["status"]) {
 // PROFILES
 // ============================================
 
+export async function getAllUsers(): Promise<UserProfile[]> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error || !data) return [];
+  return data.map((d: Record<string, unknown>) => ({
+    id: d.id as string,
+    email: (d.email as string) || "",
+    name: (d.name as string) || "",
+    phone: (d.phone as string) || "",
+    role: (d.role as "admin" | "customer") || "customer",
+    avatar: (d.avatar_url as string) || "",
+    createdAt: (d.created_at as string) || "",
+  }));
+}
+
 export async function getProfile(userId: string): Promise<UserProfile | null> {
   const { data, error } = await supabase
     .from("profiles")

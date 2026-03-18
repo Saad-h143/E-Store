@@ -10,9 +10,9 @@ interface OrderItem {
 }
 
 function formatPrice(price: number) {
-  return new Intl.NumberFormat("en-IN", {
+  return new Intl.NumberFormat("de-DE", {
     style: "currency",
-    currency: "INR",
+    currency: "EUR",
     maximumFractionDigits: 0,
   }).format(price);
 }

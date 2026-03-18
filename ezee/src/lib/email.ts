@@ -42,9 +42,9 @@ async function sendEmail(to: string, subject: string, html: string) {
 }
 
 function formatPrice(price: number) {
-  return new Intl.NumberFormat("en-IN", {
+  return new Intl.NumberFormat("de-DE", {
     style: "currency",
-    currency: "INR",
+    currency: "EUR",
     maximumFractionDigits: 0,
   }).format(price);
 }
@@ -177,6 +177,86 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
     data.customerEmail,
     `Order Confirmed - ${data.orderNumber} | Ezee Store`,
     orderConfirmationHtml(data)
+  );
+}
+
+function adminOrderAlertHtml(data: OrderEmailData & { customerPhone: string }) {
+  const itemsHtml = data.items
+    .map(
+      (item) => `
+    <tr>
+      <td style="padding:10px 0;border-bottom:1px solid #f4f4f5;">
+        <p style="margin:0;font-weight:600;color:#18181b;">${item.title}</p>
+        <p style="margin:4px 0 0;color:#71717a;font-size:13px;">Qty: ${item.quantity}</p>
+      </td>
+      <td style="padding:10px 0;border-bottom:1px solid #f4f4f5;text-align:right;font-weight:600;color:#18181b;">
+        ${formatPrice(item.price * item.quantity)}
+      </td>
+    </tr>`
+    )
+    .join("");
+
+  return baseLayout(
+    "New Order Received",
+    `
+    <div style="background:#fef3c7;border-radius:12px;padding:16px;margin-bottom:24px;text-align:center;">
+      <p style="margin:0;font-size:20px;font-weight:700;color:#b45309;">New Order Received!</p>
+    </div>
+
+    <div style="background:#f4f4f5;border-radius:12px;padding:16px;margin-bottom:20px;">
+      <p style="margin:0;font-size:13px;color:#71717a;">Order Number</p>
+      <p style="margin:4px 0 0;font-size:18px;font-weight:700;color:#6366f1;">${data.orderNumber}</p>
+    </div>
+
+    <h3 style="margin:0 0 12px;color:#18181b;font-size:16px;">Customer Details</h3>
+    <table style="width:100%;margin-bottom:20px;font-size:14px;">
+      <tr>
+        <td style="padding:6px 0;color:#71717a;width:100px;">Name</td>
+        <td style="padding:6px 0;font-weight:600;color:#18181b;">${data.customerName}</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;color:#71717a;">Email</td>
+        <td style="padding:6px 0;font-weight:600;color:#18181b;">${data.customerEmail}</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;color:#71717a;">Phone</td>
+        <td style="padding:6px 0;font-weight:600;color:#18181b;">${data.customerPhone}</td>
+      </tr>
+    </table>
+
+    <h3 style="margin:0 0 12px;color:#18181b;font-size:16px;">Items Ordered</h3>
+    <table style="width:100%;border-collapse:collapse;">
+      ${itemsHtml}
+      <tr>
+        <td style="padding:16px 0 0;font-weight:700;font-size:16px;color:#18181b;">Total</td>
+        <td style="padding:16px 0 0;text-align:right;font-weight:700;font-size:16px;color:#6366f1;">${formatPrice(data.total)}</td>
+      </tr>
+    </table>
+
+    <div style="margin-top:20px;padding:16px;background:#f0fdf4;border-radius:12px;border-left:4px solid #22c55e;">
+      <p style="margin:0;font-size:13px;color:#15803d;font-weight:600;">Ship To</p>
+      <p style="margin:4px 0 0;color:#166534;">${data.shippingAddress}</p>
+    </div>
+
+    <div style="margin-top:24px;text-align:center;">
+      <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/admin/orders" style="display:inline-block;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:14px 32px;border-radius:12px;">
+        View Order in Dashboard
+      </a>
+    </div>
+
+    <p style="margin:20px 0 0;color:#71717a;font-size:12px;text-align:center;">
+      ${new Date().toLocaleString("en-PK", { timeZone: "Asia/Karachi" })}
+    </p>
+  `
+  );
+}
+
+export async function sendAdminOrderAlertEmail(data: OrderEmailData & { customerPhone: string }) {
+  const adminEmail = process.env.SMTP_EMAIL!;
+  return sendEmail(
+    adminEmail,
+    `New Order - ${data.orderNumber} | ${data.customerName} | ${formatPrice(data.total)}`,
+    adminOrderAlertHtml(data)
   );
 }
 

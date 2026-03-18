@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sendOrderConfirmationEmail } from "@/lib/email";
+import { sendOrderConfirmationEmail, sendAdminOrderAlertEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { customerName, customerEmail, orderNumber, items, total, shippingAddress } = body;
+    const { customerName, customerEmail, customerPhone, orderNumber, items, total, shippingAddress } = body;
 
     console.log("[EMAIL] Order confirmation request for:", customerEmail, orderNumber);
 
@@ -13,14 +13,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const result = await sendOrderConfirmationEmail({
-      customerName,
-      customerEmail,
-      orderNumber,
-      items,
-      total,
-      shippingAddress,
-    });
+    // Send customer email + admin alert in parallel
+    const [result] = await Promise.all([
+      sendOrderConfirmationEmail({
+        customerName,
+        customerEmail,
+        orderNumber,
+        items,
+        total,
+        shippingAddress,
+      }),
+      sendAdminOrderAlertEmail({
+        customerName,
+        customerEmail,
+        customerPhone: customerPhone || "",
+        orderNumber,
+        items,
+        total,
+        shippingAddress,
+      }).catch((err) => console.error("[EMAIL] Admin alert failed:", err)),
+    ]);
 
     console.log("[EMAIL] Send result:", result);
 
