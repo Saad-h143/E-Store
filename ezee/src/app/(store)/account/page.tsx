@@ -13,6 +13,7 @@ import { getUserOrders } from "@/lib/supabase/queries";
 import { formatPrice } from "@/store/cart-store";
 import Link from "next/link";
 import type { Order } from "@/types";
+import { useLanguageStore } from "@/store/language-store";
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
@@ -26,6 +27,7 @@ const statusColors: Record<string, string> = {
 export default function AccountPage() {
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const { t } = useLanguageStore();
   const [userOrders, setUserOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
 
@@ -43,8 +45,8 @@ export default function AccountPage() {
   if (!isAuthenticated || !user) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-20 text-center">
-        <h1 className="text-2xl font-bold mb-2">Please Login</h1>
-        <p className="text-muted-foreground mb-4">You need to be logged in to view your account.</p>
+        <h1 className="text-2xl font-bold mb-2">{t.account.pleaseLogin}</h1>
+        <p className="text-muted-foreground mb-4">{t.account.loginRequired}</p>
         <Link href="/login">
           <Button>Login</Button>
         </Link>
@@ -54,7 +56,7 @@ export default function AccountPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-      <h1 className="text-3xl font-bold tracking-tight mb-8 gradient-text">My Account</h1>
+      <h1 className="text-3xl font-bold tracking-tight mb-8 gradient-text">{t.account.title}</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Profile Card */}
@@ -72,7 +74,7 @@ export default function AccountPage() {
                 <h2 className="text-lg font-bold">{user.name}</h2>
                 <Badge variant="secondary" className="text-xs">
                   <Shield className="h-3 w-3 mr-1" />
-                  {user.role === "admin" ? "Administrator" : "Customer"}
+                  {user.role === "admin" ? t.account.administrator : t.account.customer}
                 </Badge>
               </div>
             </div>
@@ -92,7 +94,7 @@ export default function AccountPage() {
               )}
               <div className="flex items-center gap-3 text-muted-foreground">
                 <Calendar className="h-4 w-4" />
-                <span>Joined {new Date(user.createdAt).toLocaleDateString("en-IN", { year: "numeric", month: "long" })}</span>
+                <span>{t.account.joined} {new Date(user.createdAt).toLocaleDateString("en-IN", { year: "numeric", month: "long" })}</span>
               </div>
             </div>
 
@@ -107,7 +109,7 @@ export default function AccountPage() {
               }}
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Logout
+              {t.account.logout}
             </Button>
           </div>
         </motion.div>
@@ -123,13 +125,13 @@ export default function AccountPage() {
           <div className="rounded-2xl border bg-card/80 backdrop-blur-sm p-6">
             <div className="flex items-center gap-2 mb-6">
               <Package className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-bold">My Orders</h2>
+              <h2 className="text-lg font-bold">{t.account.myOrders}</h2>
             </div>
 
             {userOrders.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <Package className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p>No orders yet.</p>
+                <p>{t.account.noOrders}</p>
               </div>
             ) : (
               <div className="space-y-4">

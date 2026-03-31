@@ -29,8 +29,10 @@ import { ProductGridSkeleton } from "@/components/common/product-skeleton";
 import { getProducts, getCategories, getSubcategories } from "@/lib/supabase/queries";
 import { formatPrice } from "@/store/cart-store";
 import type { Product, Category, Subcategory } from "@/types";
+import { useLanguageStore } from "@/store/language-store";
 
 function ShopContent() {
+  const { t } = useLanguageStore();
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get("category") || "";
   const initialSearch = searchParams.get("search") || "";
@@ -185,7 +187,7 @@ function ShopContent() {
     <div className={mobile ? "space-y-5 px-1" : "space-y-6"}>
       {/* Categories */}
       <div>
-        <h4 className="text-sm font-semibold mb-3">Brand</h4>
+        <h4 className="text-sm font-semibold mb-3">{t.shop.brand}</h4>
         <div className={mobile ? "space-y-1" : "space-y-2.5"}>
           {categoriesLoading
             ? Array.from({ length: 4 }).map((_, i) => (
@@ -224,7 +226,7 @@ function ShopContent() {
         <>
           <Separator />
           <div>
-            <h4 className="text-sm font-semibold mb-3">Subcategory</h4>
+            <h4 className="text-sm font-semibold mb-3">{t.shop.subcategory}</h4>
             <div className={mobile ? "space-y-1" : "space-y-2.5"}>
               <label className={`flex items-center gap-3 cursor-pointer group ${
                 mobile ? "min-h-[44px] py-2 px-2 -mx-2 rounded-xl hover:bg-accent/50 active:bg-accent transition-colors" : ""
@@ -235,7 +237,7 @@ function ShopContent() {
                   className={mobile ? "h-5 w-5" : ""}
                 />
                 <span className={`${mobile ? "text-[15px]" : "text-sm"} text-muted-foreground group-hover:text-foreground transition-colors`}>
-                  All
+                  {t.shop.all}
                 </span>
               </label>
               {subcategories.map((sub) => (
@@ -261,7 +263,7 @@ function ShopContent() {
 
       {/* Price Range */}
       <div>
-        <h4 className="text-sm font-semibold mb-4">Price Range</h4>
+        <h4 className="text-sm font-semibold mb-4">{t.shop.priceRange}</h4>
         <div className={mobile ? "px-1" : ""}>
           <Slider
             value={priceRange}
@@ -289,7 +291,7 @@ function ShopContent() {
           onCheckedChange={(checked) => setDealsOnly(checked === true)}
           className={mobile ? "h-5 w-5" : ""}
         />
-        <span className={`${mobile ? "text-[15px]" : "text-sm"} font-medium`}>Deals & Offers Only</span>
+        <span className={`${mobile ? "text-[15px]" : "text-sm"} font-medium`}>{t.shop.dealsOnly}</span>
       </label>
 
       {activeFilterCount > 0 && (
@@ -301,7 +303,7 @@ function ShopContent() {
             className={`w-full cursor-pointer ${mobile ? "h-12 rounded-xl text-sm font-medium" : ""}`}
             onClick={clearFilters}
           >
-            Clear All Filters
+            {t.shop.clearAllFilters}
           </Button>
         </>
       )}
@@ -312,9 +314,9 @@ function ShopContent() {
     <div className="mx-auto max-w-7xl px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 overflow-x-hidden">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight gradient-text">Shop</h1>
+        <h1 className="text-3xl font-bold tracking-tight gradient-text">{t.shop.title}</h1>
         <p className="text-muted-foreground mt-1">
-          Browse our collection of premium smartphones
+          {t.shop.subtitle}
         </p>
       </div>
 
@@ -323,7 +325,7 @@ function ShopContent() {
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search phones..."
+            placeholder={t.shop.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10 h-11 rounded-xl bg-background/60 backdrop-blur-sm w-full"
@@ -344,15 +346,15 @@ function ShopContent() {
         <div className="flex gap-2 min-w-0">
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-[140px] sm:w-[180px] h-11 rounded-xl shrink-0">
-              <SelectValue placeholder="Sort by" />
+              <SelectValue placeholder={t.shop.sortBy} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="featured">Featured</SelectItem>
-              <SelectItem value="newest">Newest</SelectItem>
-              <SelectItem value="price-low">Price: Low to High</SelectItem>
-              <SelectItem value="price-high">Price: High to Low</SelectItem>
-              <SelectItem value="best-selling">Best Selling</SelectItem>
-              <SelectItem value="discount">Biggest Discount</SelectItem>
+              <SelectItem value="featured">{t.shop.featured}</SelectItem>
+              <SelectItem value="newest">{t.shop.newest}</SelectItem>
+              <SelectItem value="price-low">{t.shop.priceLowHigh}</SelectItem>
+              <SelectItem value="price-high">{t.shop.priceHighLow}</SelectItem>
+              <SelectItem value="best-selling">{t.shop.bestSelling}</SelectItem>
+              <SelectItem value="discount">{t.shop.biggestDiscount}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -361,7 +363,7 @@ function ShopContent() {
             <SheetTrigger asChild>
               <Button variant="outline" className="lg:hidden h-11 rounded-xl relative">
                 <SlidersHorizontal className="h-4 w-4 mr-2" />
-                Filters
+                {t.shop.filters}
                 {activeFilterCount > 0 && (
                   <Badge className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
                     {activeFilterCount}
@@ -372,9 +374,9 @@ function ShopContent() {
             <SheetContent side="left" className="w-[min(85vw,340px)] p-0 flex flex-col">
               <SheetHeader className="px-5 pt-5 pb-4 border-b border-border/50 shrink-0">
                 <div className="flex items-center justify-between">
-                  <SheetTitle className="text-lg">Filters</SheetTitle>
+                  <SheetTitle className="text-lg">{t.shop.filters}</SheetTitle>
                   {activeFilterCount > 0 && (
-                    <Badge className="text-xs">{activeFilterCount} active</Badge>
+                    <Badge className="text-xs">{activeFilterCount} {t.shop.active}</Badge>
                   )}
                 </div>
               </SheetHeader>
@@ -387,7 +389,7 @@ function ShopContent() {
                     className="w-full h-12 rounded-xl font-semibold cursor-pointer bg-gradient-to-r from-primary to-purple-600 text-white"
                     onClick={() => setMobileFiltersOpen(false)}
                   >
-                    Show {filtered.length} Result{filtered.length !== 1 ? "s" : ""}
+                    {t.shop.showResults.replace("{count}", String(filtered.length))}
                   </Button>
                 </div>
               )}
@@ -429,7 +431,7 @@ function ShopContent() {
               className="pl-3 pr-1 py-1 rounded-lg cursor-pointer"
               onClick={() => setDealsOnly(false)}
             >
-              Deals Only
+              {t.shop.dealsOnly}
               <X className="h-3 w-3 ml-1" />
             </Badge>
           )}
@@ -443,10 +445,10 @@ function ShopContent() {
           <div className="sticky top-20 rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm overflow-hidden shadow-sm">
             <div className="bg-gradient-to-r from-primary to-purple-600 px-5 py-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-white tracking-wide">Filters</h3>
+                <h3 className="text-sm font-bold text-white tracking-wide">{t.shop.filters}</h3>
                 {activeFilterCount > 0 && (
                   <Badge className="bg-white/20 text-white text-[10px] font-bold border-0 backdrop-blur-sm">
-                    {activeFilterCount} active
+                    {activeFilterCount} {t.shop.active}
                   </Badge>
                 )}
               </div>
@@ -462,12 +464,12 @@ function ShopContent() {
           <div className="flex items-center justify-between mb-5">
             <p className="text-sm text-muted-foreground">
               {loading
-                ? "Loading products..."
-                : `${filtered.length} product${filtered.length !== 1 ? "s" : ""} found`}
+                ? t.shop.loading
+                : t.shop.productsFound.replace("{count}", String(filtered.length))}
             </p>
             {!loading && filtered.length > PRODUCTS_PER_PAGE && (
               <p className="text-xs text-muted-foreground">
-                Page {currentPage} of {Math.ceil(filtered.length / PRODUCTS_PER_PAGE)}
+                {t.shop.page.replace("{current}", String(currentPage)).replace("{total}", String(Math.ceil(filtered.length / PRODUCTS_PER_PAGE)))}
               </p>
             )}
           </div>
@@ -578,12 +580,12 @@ function ShopContent() {
               <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center mb-4">
                 <Search className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="text-lg font-semibold mb-1">No products found</h3>
+              <h3 className="text-lg font-semibold mb-1">{t.shop.noProducts}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Try adjusting your filters or search terms
+                {t.shop.noProductsHint}
               </p>
               <Button variant="outline" onClick={clearFilters} className="cursor-pointer">
-                Clear Filters
+                {t.shop.clearFilters}
               </Button>
             </motion.div>
           )}

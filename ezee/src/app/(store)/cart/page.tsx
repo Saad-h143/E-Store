@@ -14,8 +14,10 @@ import { useCartStore, getDiscountedPrice, formatPrice } from "@/store/cart-stor
 import { useAuthStore } from "@/store/auth-store";
 import { createOrder } from "@/lib/supabase/queries";
 import { toast } from "sonner";
+import { useLanguageStore } from "@/store/language-store";
 
 export default function CartPage() {
+  const { t } = useLanguageStore();
   const router = useRouter();
   const { items, removeItem, updateQuantity, clearCart, getTotal } = useCartStore();
   const { isAuthenticated, user } = useAuthStore();
@@ -30,16 +32,16 @@ export default function CartPage() {
 
   const handleCheckout = async () => {
     if (!isAuthenticated || !user) {
-      toast.error("Please login to place an order.");
+      toast.error(t.cart.loginRequired);
       return;
     }
 
     if (!shippingInfo.address.trim()) {
-      toast.error("Please enter a shipping address.");
+      toast.error(t.cart.addressRequired);
       return;
     }
     if (!shippingInfo.phone.trim()) {
-      toast.error("Please enter a phone number.");
+      toast.error(t.cart.phoneRequired);
       return;
     }
 
@@ -96,7 +98,7 @@ export default function CartPage() {
       }).catch(() => {});
 
       clearCart();
-      toast.success("Order placed successfully!");
+      toast.success(t.cart.orderSuccess);
       if (user.role === "admin") {
         router.push("/admin/orders");
       } else {
@@ -104,7 +106,7 @@ export default function CartPage() {
       }
     } catch (err) {
       console.error("Order error:", err);
-      toast.error("Failed to place order. Please contact support.");
+      toast.error(t.cart.orderFailed);
     } finally {
       setPlacingOrder(false);
     }
@@ -121,14 +123,13 @@ export default function CartPage() {
           <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center mb-6">
             <ShoppingBag className="h-10 w-10 text-muted-foreground" />
           </div>
-          <h1 className="text-2xl font-bold mb-2">Your cart is empty</h1>
+          <h1 className="text-2xl font-bold mb-2">{t.cart.empty}</h1>
           <p className="text-muted-foreground mb-6 max-w-md">
-            Looks like you haven&apos;t added any items to your cart yet.
-            Browse our collection and find something you love!
+            {t.cart.emptyText}
           </p>
           <Link href="/shop">
             <Button size="lg" className="rounded-xl">
-              Continue Shopping
+              {t.cart.continueShopping}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
@@ -139,7 +140,7 @@ export default function CartPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-      <h1 className="text-3xl font-bold tracking-tight mb-8 gradient-text">Shopping Cart</h1>
+      <h1 className="text-3xl font-bold tracking-tight mb-8 gradient-text">{t.cart.title}</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Cart Items */}
@@ -222,7 +223,7 @@ export default function CartPage() {
                         className="h-8 w-8 text-destructive hover:text-destructive"
                         onClick={() => {
                           removeItem(item.product.id);
-                          toast.success("Item removed from cart");
+                          toast.success(t.cart.itemRemoved);
                         }}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -237,7 +238,7 @@ export default function CartPage() {
           <div className="flex justify-between">
             <Link href="/shop">
               <Button variant="outline" className="rounded-xl">
-                Continue Shopping
+                {t.cart.continueShopping}
               </Button>
             </Link>
             <Button
@@ -245,11 +246,11 @@ export default function CartPage() {
               className="text-destructive hover:text-destructive rounded-xl"
               onClick={() => {
                 clearCart();
-                toast.success("Cart cleared");
+                toast.success(t.cart.cartCleared);
               }}
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              Clear Cart
+              {t.cart.clearCart}
             </Button>
           </div>
         </div>
@@ -257,20 +258,20 @@ export default function CartPage() {
         {/* Order Summary */}
         <div>
           <div className="sticky top-20 rounded-2xl border bg-card/80 backdrop-blur-sm p-6 space-y-4 overflow-hidden relative before:absolute before:top-0 before:left-0 before:right-0 before:h-1 before:bg-gradient-to-r before:from-primary before:to-purple-600">
-            <h2 className="text-lg font-bold">Order Summary</h2>
+            <h2 className="text-lg font-bold">{t.cart.orderSummary}</h2>
 
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">
-                  Subtotal ({items.reduce((a, b) => a + b.quantity, 0)} items)
+                  {t.cart.subtotal} ({items.reduce((a, b) => a + b.quantity, 0)} {t.cart.items})
                 </span>
                 <span className="font-medium">{formatPrice(total)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Shipping</span>
+                <span className="text-muted-foreground">{t.cart.shipping}</span>
                 <span className="font-medium">
                   {shipping === 0 ? (
-                    <span className="text-emerald-600">FREE</span>
+                    <span className="text-emerald-600">{t.cart.free}</span>
                   ) : (
                     formatPrice(shipping)
                   )}
@@ -278,7 +279,7 @@ export default function CartPage() {
               </div>
               {shipping > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  Free shipping on orders above {formatPrice(25000)}
+                  {t.cart.freeShippingAbove.replace("{price}", formatPrice(25000))}
                 </p>
               )}
             </div>
@@ -286,32 +287,32 @@ export default function CartPage() {
             <Separator />
 
             <div className="flex justify-between text-lg font-bold">
-              <span>Total</span>
+              <span>{t.cart.total}</span>
               <span className="text-primary">{formatPrice(grandTotal)}</span>
             </div>
 
             {isAuthenticated && user && (
               <div className="space-y-3">
                 <Separator />
-                <h3 className="font-semibold text-sm">Shipping Details</h3>
+                <h3 className="font-semibold text-sm">{t.cart.shippingDetails}</h3>
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-xs">Phone Number *</Label>
+                  <Label htmlFor="phone" className="text-xs">{t.cart.phoneNumber} *</Label>
                   <Input
                     id="phone"
                     type="tel"
                     value={shippingInfo.phone}
                     onChange={(e) => setShippingInfo((p) => ({ ...p, phone: e.target.value }))}
-                    placeholder="e.g., 9876543210"
+                    placeholder={t.cart.phonePlaceholder}
                     className="h-9 rounded-xl text-sm"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="address" className="text-xs">Shipping Address *</Label>
+                  <Label htmlFor="address" className="text-xs">{t.cart.shippingAddress} *</Label>
                   <Input
                     id="address"
                     value={shippingInfo.address}
                     onChange={(e) => setShippingInfo((p) => ({ ...p, address: e.target.value }))}
-                    placeholder="Full shipping address"
+                    placeholder={t.cart.addressPlaceholder}
                     className="h-9 rounded-xl text-sm"
                   />
                 </div>
@@ -322,11 +323,11 @@ export default function CartPage() {
               <div className="flex items-center gap-2 text-muted-foreground bg-muted/50 px-3 py-2.5 rounded-xl border border-dashed text-xs">
                 <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                 <span>
-                  Please{" "}
+                  {t.cart.pleaseLogin.split("{link}")[0]}
                   <Link href="/login" className="text-primary font-medium underline underline-offset-2">
-                    login
-                  </Link>{" "}
-                  to place an order.
+                    {t.cart.loginLink}
+                  </Link>
+                  {t.cart.pleaseLogin.split("{link}")[1]}
                 </span>
               </div>
             )}
@@ -340,12 +341,12 @@ export default function CartPage() {
               {placingOrder ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Placing Order...
+                  {t.cart.placingOrder}
                 </>
               ) : isAuthenticated ? (
-                "Place Order"
+                t.cart.placeOrder
               ) : (
-                "Login to Checkout"
+                t.cart.loginToCheckout
               )}
             </Button>
           </div>

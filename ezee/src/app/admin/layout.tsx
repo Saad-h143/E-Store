@@ -17,6 +17,7 @@ import {
   Sun,
   Home,
   Users,
+  BarChart3,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -24,21 +25,24 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/store/auth-store";
 import { cn } from "@/lib/utils";
-
-const navItems = [
-  { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/admin/products", icon: Package, label: "Products" },
-  { href: "/admin/orders", icon: ShoppingCart, label: "Orders" },
-  { href: "/admin/categories", icon: FolderTree, label: "Categories" },
-  { href: "/admin/banners", icon: ImageIcon, label: "Banners" },
-  { href: "/admin/users", icon: Users, label: "Users" },
-];
+import { useLanguageStore } from "@/store/language-store";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const { t } = useLanguageStore();
+
+  const navItems = [
+    { href: "/admin", icon: LayoutDashboard, label: t.admin.dashboard },
+    { href: "/admin/products", icon: Package, label: t.admin.products },
+    { href: "/admin/orders", icon: ShoppingCart, label: t.admin.orders },
+    { href: "/admin/categories", icon: FolderTree, label: t.admin.categories },
+    { href: "/admin/banners", icon: ImageIcon, label: t.admin.banners },
+    { href: "/admin/users", icon: Users, label: t.admin.users },
+    { href: "/admin/sales", icon: BarChart3, label: "Sales History" },
+  ];
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -51,16 +55,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
+          <h1 className="text-2xl font-bold mb-2">{t.admin.accessDenied}</h1>
           <p className="text-muted-foreground mb-4">
-            You need admin privileges to access this page.
+            {t.admin.adminRequired}
           </p>
           <div className="flex gap-3 justify-center">
             <Link href="/login">
-              <Button>Login as Admin</Button>
+              <Button>{t.admin.loginAsAdmin}</Button>
             </Link>
             <Link href="/">
-              <Button variant="outline">Go Home</Button>
+              <Button variant="outline">{t.admin.goHome}</Button>
             </Link>
           </div>
         </div>
@@ -75,7 +79,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 text-white flex items-center justify-center">
           <Smartphone className="h-4 w-4" />
         </div>
-        <span className="font-bold text-lg">Ezee Admin</span>
+        <span className="font-bold text-lg">{t.admin.title}</span>
       </div>
 
       <Separator />
@@ -110,7 +114,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
         >
           <Home className="h-4 w-4" />
-          View Store
+          {t.admin.viewStore}
         </Link>
         <button
           onClick={() => {
@@ -120,7 +124,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
         >
           <LogOut className="h-4 w-4" />
-          Logout
+          {t.admin.logout}
         </button>
       </div>
     </div>
@@ -145,7 +149,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <SidebarContent />
           </SheetContent>
         </Sheet>
-        <span className="font-semibold text-sm">Ezee Admin</span>
+        <span className="font-semibold text-sm">{t.admin.title}</span>
 
         <div className="ml-auto flex items-center gap-2">
           {mounted && (

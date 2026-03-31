@@ -564,6 +564,34 @@ export async function getOrders(): Promise<Order[]> {
   return orders;
 }
 
+// Get sales data per product from all orders
+export async function getProductSalesMap(): Promise<Record<string, { totalSold: number; totalRevenue: number; orders: { orderNumber: string; customerName: string; quantity: number; date: string; status: string }[] }>> {
+  const orders = await getOrders();
+  const salesMap: Record<string, { totalSold: number; totalRevenue: number; orders: { orderNumber: string; customerName: string; quantity: number; date: string; status: string }[] }> = {};
+
+  for (const order of orders) {
+    if (order.status === "cancelled") continue;
+    for (const item of order.items) {
+      const pid = item.productId;
+      if (!pid) continue;
+      if (!salesMap[pid]) {
+        salesMap[pid] = { totalSold: 0, totalRevenue: 0, orders: [] };
+      }
+      salesMap[pid].totalSold += item.quantity;
+      salesMap[pid].totalRevenue += item.price * item.quantity;
+      salesMap[pid].orders.push({
+        orderNumber: order.orderNumber,
+        customerName: order.customerName,
+        quantity: item.quantity,
+        date: order.createdAt,
+        status: order.status,
+      });
+    }
+  }
+
+  return salesMap;
+}
+
 export async function getUserOrders(userId: string): Promise<Order[]> {
   const { data, error } = await supabase
     .from("orders")
@@ -599,7 +627,27 @@ export async function createOrder(order: {
     .select()
     .single();
   if (error) throw error;
+
+  // Deduct stock for each item
+  for (const item of order.items) {
+    if (item.productId) {
+      const { data: product } = await supabase
+        .from("products")
+        .select("stock")
+        .eq("id", item.productId)
+        .single();
+      if (product) {
+        const newStock = Math.max(0, (product.stock || 0) - item.quantity);
+        await supabase
+          .from("products")
+          .update({ stock: newStock })
+          .eq("id", item.productId);
+      }
+    }
+  }
+
   cacheSet(CACHE_KEYS.ORDERS, null, 0);
+  cacheInvalidateProducts();
   return mapOrder(data);
 }
 

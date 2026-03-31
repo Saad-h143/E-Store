@@ -6,33 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-
-const footerLinks = {
-  shop: [
-    { label: "All Phones", href: "/shop" },
-    { label: "New Arrivals", href: "/shop?sort=newest" },
-    { label: "Best Sellers", href: "/shop?sort=best-selling" },
-    { label: "Deals & Offers", href: "/shop?deals=true" },
-  ],
-  brands: [
-    { label: "Apple", href: "/shop?category=apple" },
-    { label: "Samsung", href: "/shop?category=samsung" },
-    { label: "Google", href: "/shop?category=google" },
-    { label: "OnePlus", href: "/shop?category=oneplus" },
-  ],
-  support: [
-    { label: "Contact Us", href: "/contact" },
-    { label: "FAQs", href: "#" },
-    { label: "Shipping Info", href: "#" },
-    { label: "Return Policy", href: "#" },
-  ],
-  company: [
-    { label: "About Ezee", href: "#" },
-    { label: "Careers", href: "#" },
-    { label: "Privacy Policy", href: "#" },
-    { label: "Terms of Service", href: "#" },
-  ],
-};
+import { useLanguageStore } from "@/store/language-store";
 
 const socialLinks = [
   { icon: Facebook, href: "#", label: "Facebook" },
@@ -42,6 +16,35 @@ const socialLinks = [
 ];
 
 export function Footer() {
+  const { t } = useLanguageStore();
+
+  const footerLinks = {
+    [t.footer.shop]: [
+      { label: t.footer.allPhones, href: "/shop" },
+      { label: t.footer.newArrivals, href: "/shop?sort=newest" },
+      { label: t.footer.bestSellers, href: "/shop?sort=best-selling" },
+      { label: t.footer.dealsOffers, href: "/shop?deals=true" },
+    ],
+    [t.footer.brands]: [
+      { label: "Apple", href: "/shop?category=apple" },
+      { label: "Samsung", href: "/shop?category=samsung" },
+      { label: "Google", href: "/shop?category=google" },
+      { label: "OnePlus", href: "/shop?category=oneplus" },
+    ],
+    [t.footer.support]: [
+      { label: t.footer.contactUs, href: "/contact" },
+      { label: t.footer.faqs, href: "#" },
+      { label: t.footer.shippingInfo, href: "#" },
+      { label: t.footer.returnPolicy, href: "#" },
+    ],
+    [t.footer.company]: [
+      { label: t.footer.aboutEzee, href: "#" },
+      { label: t.footer.careers, href: "#" },
+      { label: t.footer.privacyPolicy, href: "#" },
+      { label: t.footer.termsOfService, href: "#" },
+    ],
+  };
+
   return (
     <footer className="bg-card relative">
       {/* Gradient accent line at top */}
@@ -52,9 +55,9 @@ export function Footer() {
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
             <div>
-              <h3 className="text-xl font-bold tracking-tight">Stay in the loop</h3>
+              <h3 className="text-xl font-bold tracking-tight">{t.footer.stayInLoop}</h3>
               <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
-                Subscribe to get exclusive deals, new arrivals and insider-only discounts.
+                {t.footer.subscribeText}
               </p>
             </div>
             <form
@@ -67,12 +70,12 @@ export function Footer() {
             >
               <Input
                 type="email"
-                placeholder="Enter your email"
+                placeholder={t.footer.enterEmail}
                 required
                 className="h-11 rounded-xl flex-1 bg-background/50 backdrop-blur-sm border-border/50 focus:border-primary/30"
               />
               <Button type="submit" className="h-11 rounded-xl px-6 cursor-pointer bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-md shadow-primary/20">
-                <Send className="h-4 w-4 mr-2" /> Subscribe
+                <Send className="h-4 w-4 mr-2" /> {t.footer.subscribe}
               </Button>
             </form>
           </div>
@@ -91,7 +94,7 @@ export function Footer() {
               <span className="text-xl font-bold">Ezee</span>
             </Link>
             <p className="text-sm text-muted-foreground mb-4">
-              Your trusted destination for premium smartphones at the best prices.
+              {t.footer.tagline}
             </p>
             <div className="space-y-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
@@ -136,7 +139,7 @@ export function Footer() {
         {/* Bottom */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Ezee. All rights reserved.
+            &copy; {new Date().getFullYear()} Ezee. {t.footer.allRightsReserved}
           </p>
           <div className="flex items-center gap-2">
             {socialLinks.map((social) => (

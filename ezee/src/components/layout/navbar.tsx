@@ -41,12 +41,13 @@ import { getCategories, getSubcategories } from "@/lib/supabase/queries";
 import type { Category, Subcategory } from "@/types";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/common/logo";
+import { useLanguageStore } from "@/store/language-store";
+import { localeNames, type Locale } from "@/lib/i18n";
+import { Globe } from "lucide-react";
 
-const navLinks: { href: string; label: string }[] = [
-  { href: "/", label: "Home" },
-  { href: "/shop", label: "Shop" },
-  { href: "/contact", label: "Contact" },
-];
+const FLAG_MAP: Record<string, string> = {
+  en: "🇬🇧", pt: "🇵🇹", es: "🇪🇸", it: "🇮🇹", fr: "🇫🇷", de: "🇩🇪",
+};
 
 export function Navbar() {
   const pathname = usePathname();
@@ -62,6 +63,13 @@ export function Navbar() {
 
   const itemCount = useCartStore((s) => s.getItemCount());
   const { user, isAuthenticated, logout } = useAuthStore();
+  const { locale, t, setLocale } = useLanguageStore();
+
+  const navLinks = [
+    { href: "/", label: t.nav.home },
+    { href: "/shop", label: t.nav.shop },
+    { href: "/contact", label: t.nav.contact },
+  ];
 
   useEffect(() => {
     setMounted(true);
@@ -264,6 +272,28 @@ export function Navbar() {
                   </AnimatePresence>
                 </Button>
               )}
+
+              {/* Language Switcher */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl cursor-pointer hover:bg-accent/60 hidden md:flex">
+                    <Globe className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[160px] rounded-xl p-1">
+                  <DropdownMenuLabel className="text-xs text-muted-foreground px-2 py-1">Language</DropdownMenuLabel>
+                  {(Object.keys(localeNames) as Locale[]).map((loc) => (
+                    <DropdownMenuItem
+                      key={loc}
+                      onClick={() => setLocale(loc)}
+                      className={cn("cursor-pointer rounded-lg gap-2 text-sm", locale === loc && "bg-primary/10 text-primary font-medium")}
+                    >
+                      <span className="text-base">{FLAG_MAP[loc]}</span>
+                      {localeNames[loc]}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Separator - desktop only */}
               <div className="hidden md:block w-px h-6 bg-border/60 mx-1.5" />
@@ -526,6 +556,26 @@ export function Navbar() {
                       </>
                     )}
                   </nav>
+
+                  {/* Language Switcher - Mobile */}
+                  <div className="shrink-0 border-t border-border/50 px-4 py-3">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {(Object.keys(localeNames) as Locale[]).map((loc) => (
+                        <button
+                          key={loc}
+                          onClick={() => setLocale(loc)}
+                          className={cn(
+                            "px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer",
+                            locale === loc
+                              ? "bg-primary/10 text-primary ring-1 ring-primary/30"
+                              : "text-muted-foreground hover:bg-accent"
+                          )}
+                        >
+                          {FLAG_MAP[loc]} {localeNames[loc].slice(0, 2).toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
                   {/* Bottom action - Sign In / Account / Logout */}
                   <div className="shrink-0 border-t border-border/50 p-4">

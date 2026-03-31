@@ -10,12 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
+import { useLanguageStore } from "@/store/language-store";
 
 type Step = "form" | "verify";
 
 export default function RegisterPage() {
   const router = useRouter();
   const { register, loginWithGoogle } = useAuthStore();
+  const { t } = useLanguageStore();
   const [step, setStep] = useState<Step>("form");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -33,7 +35,7 @@ export default function RegisterPage() {
     setGoogleLoading(true);
     const result = await loginWithGoogle();
     if (!result.success) {
-      toast.error(result.error || "Google sign up failed");
+      toast.error(result.error || t.register.googleFailed);
       setGoogleLoading(false);
     }
   };
@@ -48,15 +50,15 @@ export default function RegisterPage() {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !password) {
-      toast.error("Please fill in all fields");
+      toast.error(t.register.fillAllFields);
       return;
     }
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error(t.register.passwordsMismatch);
       return;
     }
     if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+      toast.error(t.register.passwordTooShort);
       return;
     }
 
@@ -70,15 +72,15 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (data.success) {
-        toast.success("Verification code sent to your email!");
+        toast.success(t.register.codeSent);
         setStep("verify");
         setResendTimer(60);
         setTimeout(() => inputRefs.current[0]?.focus(), 100);
       } else {
-        toast.error(data.error || "Failed to send verification code");
+        toast.error(data.error || t.register.codeFailed);
       }
     } catch {
-      toast.error("Something went wrong. Please try again.");
+      toast.error(t.register.somethingWrong);
     } finally {
       setLoading(false);
     }
@@ -95,15 +97,15 @@ export default function RegisterPage() {
       });
       const data = await res.json();
       if (data.success) {
-        toast.success("New verification code sent!");
+        toast.success(t.register.newCodeSent);
         setResendTimer(60);
         setOtp(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
       } else {
-        toast.error(data.error || "Failed to resend code");
+        toast.error(data.error || t.register.resendFailed);
       }
     } catch {
-      toast.error("Something went wrong");
+      toast.error(t.register.somethingWrong);
     } finally {
       setLoading(false);
     }
@@ -150,7 +152,7 @@ export default function RegisterPage() {
   const handleVerifyAndRegister = async () => {
     const code = otp.join("");
     if (code.length !== 6) {
-      toast.error("Please enter the 6-digit code");
+      toast.error(t.register.enterCode);
       return;
     }
 
@@ -165,7 +167,7 @@ export default function RegisterPage() {
       const verifyData = await verifyRes.json();
 
       if (!verifyData.verified) {
-        toast.error(verifyData.error || "Invalid verification code");
+        toast.error(verifyData.error || t.register.invalidCode);
         setLoading(false);
         return;
       }
@@ -173,13 +175,13 @@ export default function RegisterPage() {
       // Step 2: Register with Supabase
       const result = await register(name, email, password);
       if (result.success) {
-        toast.success("Account created successfully!");
+        toast.success(t.register.accountCreated);
         router.push("/");
       } else {
-        toast.error(result.error || "Registration failed. Please try again.");
+        toast.error(result.error || t.register.registrationFailed);
       }
     } catch {
-      toast.error("Something went wrong. Please try again.");
+      toast.error(t.register.somethingWrong);
     } finally {
       setLoading(false);
     }
@@ -208,9 +210,9 @@ export default function RegisterPage() {
                       <Smartphone className="h-6 w-6" />
                     </div>
                   </div>
-                  <h1 className="text-2xl font-bold">Create an account</h1>
+                  <h1 className="text-2xl font-bold">{t.register.title}</h1>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Join Ezee and start shopping
+                    {t.register.subtitle}
                   </p>
                 </div>
 
@@ -232,7 +234,7 @@ export default function RegisterPage() {
                       <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                     </svg>
                   )}
-                  Sign up with Google
+                  {t.register.signUpGoogle}
                 </Button>
 
                 {/* Divider */}
@@ -242,17 +244,17 @@ export default function RegisterPage() {
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
                     <span className="bg-card/80 px-3 text-muted-foreground font-medium tracking-wider">
-                      or register with email
+                      {t.register.orRegisterEmail}
                     </span>
                   </div>
                 </div>
 
                 <form onSubmit={handleSendOtp} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
+                    <Label htmlFor="name">{t.register.fullName}</Label>
                     <Input
                       id="name"
-                      placeholder="Your name"
+                      placeholder={t.register.namePlaceholder}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="h-11 rounded-xl"
@@ -261,11 +263,11 @@ export default function RegisterPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t.register.email}</Label>
                     <Input
                       id="email"
                       type="email"
-                      placeholder="you@example.com"
+                      placeholder={t.register.emailPlaceholder}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="h-11 rounded-xl"
@@ -274,12 +276,12 @@ export default function RegisterPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">{t.register.password}</Label>
                     <div className="relative">
                       <Input
                         id="password"
                         type={showPassword ? "text" : "password"}
-                        placeholder="Min. 6 characters"
+                        placeholder={t.register.passwordPlaceholder}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="h-11 rounded-xl pr-10"
@@ -298,11 +300,11 @@ export default function RegisterPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <Label htmlFor="confirmPassword">{t.register.confirmPassword}</Label>
                     <Input
                       id="confirmPassword"
                       type="password"
-                      placeholder="Repeat your password"
+                      placeholder={t.register.confirmPlaceholder}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       className="h-11 rounded-xl"
@@ -316,17 +318,17 @@ export default function RegisterPage() {
                     disabled={loading}
                   >
                     {loading ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending Code...</>
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t.register.sendingCode}</>
                     ) : (
-                      "Continue"
+                      t.register.continue
                     )}
                   </Button>
                 </form>
 
                 <p className="text-center text-sm text-muted-foreground mt-6">
-                  Already have an account?{" "}
+                  {t.register.haveAccount}{" "}
                   <Link href="/login" className="text-primary font-medium hover:underline">
-                    Sign in
+                    {t.register.signIn}
                   </Link>
                 </p>
               </motion.div>
@@ -343,9 +345,9 @@ export default function RegisterPage() {
                       <Mail className="h-6 w-6" />
                     </div>
                   </div>
-                  <h1 className="text-2xl font-bold">Verify Your Email</h1>
+                  <h1 className="text-2xl font-bold">{t.register.verifyEmail}</h1>
                   <p className="text-sm text-muted-foreground mt-1">
-                    We sent a 6-digit code to
+                    {t.register.codeSentTo}
                   </p>
                   <p className="text-sm font-medium text-primary mt-0.5">{email}</p>
                 </div>
@@ -373,9 +375,10 @@ export default function RegisterPage() {
                   onClick={handleVerifyAndRegister}
                 >
                   {loading ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying...</>
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t.register.verifying}</>
+
                   ) : (
-                    "Verify & Create Account"
+                    t.register.verifyCreate
                   )}
                 </Button>
 
@@ -389,7 +392,7 @@ export default function RegisterPage() {
                     className="text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
                   >
                     <ArrowLeft className="h-3.5 w-3.5" />
-                    Back
+                    {t.register.back}
                   </button>
 
                   <button
@@ -403,7 +406,7 @@ export default function RegisterPage() {
                     }`}
                   >
                     <RefreshCw className="h-3.5 w-3.5" />
-                    {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend Code"}
+                    {resendTimer > 0 ? t.register.resendIn.replace("{count}", String(resendTimer)) : t.register.resendCode}
                   </button>
                 </div>
               </motion.div>

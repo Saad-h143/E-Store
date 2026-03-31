@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Plus, Search, Edit, Trash2, Eye, EyeOff, Package, Loader2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Eye, EyeOff, Package, Loader2, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +39,7 @@ import {
   getCategories,
   updateProduct,
   deleteProduct as deleteProductFromDb,
+  getProductSalesMap,
 } from "@/lib/supabase/queries";
 import type { Product, Category } from "@/types";
 import { formatPrice } from "@/store/cart-store";
@@ -53,15 +54,19 @@ export default function AdminProductsPage() {
   const [pendingToggle, setPendingToggle] = useState<{ id: string; title: string; currentActive: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
   const [mutating, setMutating] = useState<string | null>(null);
+  const [salesMap, setSalesMap] = useState<Record<string, { totalSold: number; totalRevenue: number; orders: { orderNumber: string; customerName: string; quantity: number; date: string; status: string }[] }>>({});
+  const [salesProductId, setSalesProductId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
-      const [products, categories] = await Promise.all([
+      const [products, categories, sales] = await Promise.all([
         getAllProducts(),
         getCategories(),
+        getProductSalesMap(),
       ]);
       setProductList(products);
       setCategoryList(categories);
+      setSalesMap(sales);
     } catch (error) {
       console.error("Failed to fetch data:", error);
       toast.error("Failed to load products");
@@ -72,6 +77,10 @@ export default function AdminProductsPage() {
 
   useEffect(() => {
     fetchData();
+    // Refetch when tab/window regains focus (e.g., after editing a product)
+    const handleFocus = () => fetchData();
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
   }, [fetchData]);
 
   const filtered = productList.filter((p) => {
@@ -186,6 +195,9 @@ export default function AdminProductsPage() {
                   Stock
                 </th>
                 <th className="px-5 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Sold
+                </th>
+                <th className="px-5 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Status
                 </th>
                 <th className="px-5 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider text-right">
@@ -242,6 +254,19 @@ export default function AdminProductsPage() {
                       >
                         {product.stock === 0 ? "Out of Stock" : `${product.stock} units`}
                       </Badge>
+                    </td>
+                    <td className="px-5 py-3">
+                      {salesMap[product.id]?.totalSold ? (
+                        <button
+                          onClick={() => setSalesProductId(product.id)}
+                          className="cursor-pointer flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+                        >
+                          <BarChart3 className="h-3.5 w-3.5" />
+                          {salesMap[product.id].totalSold}
+                        </button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">0</span>
+                      )}
                     </td>
                     <td className="px-5 py-3">
                       <Badge
@@ -375,6 +400,55 @@ export default function AdminProductsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Sales History Dialog */}
+      <Dialog open={salesProductId !== null} onOpenChange={(open) => { if (!open) setSalesProductId(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              Sales History
+            </DialogTitle>
+            <DialogDescription>
+              {productList.find((p) => p.id === salesProductId)?.title}
+            </DialogDescription>
+          </DialogHeader>
+          {salesProductId && salesMap[salesProductId] && (
+            <div className="space-y-4 mt-2">
+              {/* Stats */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl bg-primary/10 p-4 text-center">
+                  <p className="text-2xl font-bold text-primary">{salesMap[salesProductId].totalSold}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Units Sold</p>
+                </div>
+                <div className="rounded-xl bg-emerald-500/10 p-4 text-center">
+                  <p className="text-2xl font-bold text-emerald-600">{formatPrice(salesMap[salesProductId].totalRevenue)}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Total Revenue</p>
+                </div>
+              </div>
+
+              {/* Order history list */}
+              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                <p className="text-sm font-medium text-muted-foreground">Recent Orders</p>
+                {salesMap[salesProductId].orders.map((sale, i) => (
+                  <div key={i} className="flex items-center justify-between rounded-lg border p-3 text-sm">
+                    <div>
+                      <p className="font-medium">{sale.orderNumber}</p>
+                      <p className="text-xs text-muted-foreground">{sale.customerName}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">x{sale.quantity}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(sale.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

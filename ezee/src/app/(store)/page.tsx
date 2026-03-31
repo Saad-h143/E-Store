@@ -11,8 +11,10 @@ import { ProductGridSkeleton, BannerSkeleton } from "@/components/common/product
 import { getProducts, getCategories, getBanners } from "@/lib/supabase/queries";
 import { testimonials } from "@/data/testimonials";
 import type { Product, Category, BannerSlide } from "@/types";
+import { useLanguageStore } from "@/store/language-store";
 
 export default function HomePage() {
+  const { t } = useLanguageStore();
   const [featured, setFeatured] = useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
@@ -59,7 +61,7 @@ export default function HomePage() {
         <FeaturesStrip />
 
         <section>
-          <SectionHeader title="Featured Products" subtitle="Handpicked phones for you" href="/shop" />
+          <SectionHeader title={t.home.featuredProducts} subtitle={t.home.featuredSubtitle} href="/shop" />
           {loading ? (
             <ProductGridSkeleton count={4} />
           ) : (
@@ -74,7 +76,7 @@ export default function HomePage() {
         {categories.length > 0 && <CategoriesSection categories={categories} />}
 
         <section>
-          <SectionHeader title="New Arrivals" subtitle="Just dropped — the latest smartphones" href="/shop?sort=newest" />
+          <SectionHeader title={t.home.newArrivals} subtitle={t.home.newArrivalsSubtitle} href="/shop?sort=newest" />
           {loading ? (
             <ProductGridSkeleton count={4} />
           ) : (
@@ -87,7 +89,7 @@ export default function HomePage() {
         </section>
 
         <section>
-          <SectionHeader title="Best Sellers" subtitle="Top rated and most popular" href="/shop?sort=best-selling" />
+          <SectionHeader title={t.home.bestSellers} subtitle={t.home.bestSellersSubtitle} href="/shop?sort=best-selling" />
           {loading ? (
             <ProductGridSkeleton count={4} />
           ) : (
@@ -100,7 +102,7 @@ export default function HomePage() {
         </section>
 
         <section>
-          <SectionHeader title="Hot Deals" subtitle="Incredible discounts you won't want to miss" href="/shop?deals=true" />
+          <SectionHeader title={t.home.hotDeals} subtitle={t.home.hotDealsSubtitle} href="/shop?deals=true" />
           {loading ? (
             <ProductGridSkeleton count={4} />
           ) : (

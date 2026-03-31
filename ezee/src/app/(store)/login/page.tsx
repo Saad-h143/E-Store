@@ -11,8 +11,10 @@ import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
 import { Logo } from "@/components/common/logo";
+import { useLanguageStore } from "@/store/language-store";
 
 export default function LoginPage() {
+  const { t } = useLanguageStore();
   const router = useRouter();
   const { login, loginWithGoogle } = useAuthStore();
   const [email, setEmail] = useState("");
@@ -25,7 +27,7 @@ export default function LoginPage() {
     setGoogleLoading(true);
     const result = await loginWithGoogle();
     if (!result.success) {
-      toast.error(result.error || "Google login failed");
+      toast.error(result.error || t.login.googleFailed);
       setGoogleLoading(false);
     }
   };
@@ -33,7 +35,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      toast.error("Please fill in all fields");
+      toast.error(t.login.fillAllFields);
       return;
     }
     setLoading(true);
@@ -41,7 +43,7 @@ export default function LoginPage() {
     setLoading(false);
 
     if (result.success) {
-      toast.success("Welcome back!");
+      toast.success(t.login.welcomeBackToast);
       const { user } = useAuthStore.getState();
       if (user?.role === "admin") {
         router.push("/admin");
@@ -49,7 +51,7 @@ export default function LoginPage() {
         router.push("/");
       }
     } else {
-      toast.error(result.error || "Login failed. Please try again.");
+      toast.error(result.error || t.login.loginFailed);
     }
   };
 
@@ -110,14 +112,10 @@ export default function LoginPage() {
               className="space-y-4"
             >
               <h1 className="text-4xl xl:text-5xl font-bold leading-tight">
-                Your one-stop
-                <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-purple-200">
-                  shopping destination
-                </span>
+                {t.login.tagline}
               </h1>
               <p className="text-lg text-white/70 max-w-md leading-relaxed">
-                Discover the latest products at unbeatable prices. Sign in to access your wishlist, orders, and exclusive deals.
+                {t.login.description}
               </p>
             </motion.div>
 
@@ -129,9 +127,9 @@ export default function LoginPage() {
               className="space-y-3"
             >
               {[
-                { icon: Truck, text: "Free delivery on orders above $50" },
-                { icon: Shield, text: "100% secure payments" },
-                { icon: ShoppingBag, text: "Wide range of premium products" },
+                { icon: Truck, text: t.login.freeDelivery },
+                { icon: Shield, text: t.login.securePayments },
+                { icon: ShoppingBag, text: t.login.wideRange },
               ].map((feature, i) => (
                 <motion.div
                   key={i}
@@ -200,21 +198,21 @@ export default function LoginPage() {
           <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-8 lg:p-10 xl:p-12 shadow-xl shadow-black/5 dark:shadow-black/20">
             {/* Header */}
             <div className="mb-8 lg:mb-10">
-              <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">Welcome back</h1>
+              <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">{t.login.welcomeBack}</h1>
               <p className="text-sm lg:text-base text-muted-foreground mt-1.5 lg:mt-2">
-                Enter your credentials to access your account
+                {t.login.subtitle}
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5 lg:space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">
-                  Email
+                  {t.login.email}
                 </Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder={t.login.emailPlaceholder}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="h-11 lg:h-12 rounded-xl bg-accent/30 border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
@@ -225,20 +223,20 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="text-sm font-medium">
-                    Password
+                    {t.login.password}
                   </Label>
                   <Link
                     href="#"
                     className="text-xs text-primary hover:text-primary/80 font-medium transition-colors cursor-pointer"
                   >
-                    Forgot password?
+                    {t.login.forgotPassword}
                   </Link>
                 </div>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    placeholder={t.login.passwordPlaceholder}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="h-11 lg:h-12 rounded-xl pr-10 bg-accent/30 border-border/50 focus:border-primary/50 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
@@ -270,7 +268,7 @@ export default function LoginPage() {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <>
-                    Sign In
+                    {t.login.signIn}
                     <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
                   </>
                 )}
@@ -284,7 +282,7 @@ export default function LoginPage() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-card/80 px-3 text-muted-foreground font-medium tracking-wider">
-                  or continue with
+                  {t.login.orContinueWith}
                 </span>
               </div>
             </div>
@@ -307,17 +305,17 @@ export default function LoginPage() {
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                 </svg>
               )}
-              Continue with Google
+              {t.login.continueWithGoogle}
             </Button>
 
             <div className="mt-6 pt-6 border-t border-border/50 text-center">
               <p className="text-sm text-muted-foreground">
-                Don&apos;t have an account?{" "}
+                {t.login.noAccount}{" "}
                 <Link
                   href="/register"
                   className="text-primary font-semibold hover:text-primary/80 transition-colors cursor-pointer"
                 >
-                  Create account
+                  {t.login.createAccount}
                 </Link>
               </p>
             </div>
@@ -331,13 +329,13 @@ export default function LoginPage() {
             className="mt-6 flex items-center justify-center gap-6 text-xs text-muted-foreground lg:hidden"
           >
             <span className="flex items-center gap-1.5">
-              <Shield className="h-3.5 w-3.5" /> Secure
+              <Shield className="h-3.5 w-3.5" /> {t.login.secure}
             </span>
             <span className="flex items-center gap-1.5">
-              <Truck className="h-3.5 w-3.5" /> Free Delivery
+              <Truck className="h-3.5 w-3.5" /> {t.login.freeDelivery}
             </span>
             <span className="flex items-center gap-1.5">
-              <ShoppingBag className="h-3.5 w-3.5" /> Best Prices
+              <ShoppingBag className="h-3.5 w-3.5" /> {t.login.bestPrices}
             </span>
           </motion.div>
         </motion.div>
