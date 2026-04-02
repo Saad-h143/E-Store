@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import type SMTPTransport from "nodemailer/lib/smtp-transport";
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  family: 4,
   auth: {
     user: process.env.SMTP_EMAIL,
     pass: process.env.SMTP_APP_PASSWORD,
   },
-});
+} as SMTPTransport.Options);
 
 // In-memory OTP store (resets on server restart — fine for dev/small scale)
 const otpStore = new Map<string, { code: string; expiresAt: number; name: string }>();

@@ -26,7 +26,9 @@
       "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py \"touch target mobile filter responsive\" --domain ux -n 5)",
       "Bash(npx next:*)",
       "Bash(taskkill //F //IM node.exe)",
-      "Bash(rm -rf .next)"
+      "Bash(rm -rf .next)",
+      "Bash(mkdir -p \"D:/GitHub/E-Store/.claude/agents\")",
+      "Bash(cp \"D:/GitHub/mergen-hms/.claude/agents/\"*.md \"D:/GitHub/E-Store/.claude/agents/\")"
     ]
   }
 }

@@ -628,35 +628,46 @@ export async function createOrder(order: {
     .single();
   if (error) throw error;
 
-  // Deduct stock for each item
-  for (const item of order.items) {
-    if (item.productId) {
-      const { data: product } = await supabase
-        .from("products")
-        .select("stock")
-        .eq("id", item.productId)
-        .single();
-      if (product) {
-        const newStock = Math.max(0, (product.stock || 0) - item.quantity);
-        await supabase
-          .from("products")
-          .update({ stock: newStock })
-          .eq("id", item.productId);
-      }
-    }
-  }
-
   cacheSet(CACHE_KEYS.ORDERS, null, 0);
-  cacheInvalidateProducts();
   return mapOrder(data);
 }
 
 export async function updateOrderStatus(id: string, status: Order["status"]) {
+  // Fetch the order first to get items (needed for stock deduction)
+  const { data: orderData } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase
     .from("orders")
     .update({ status })
     .eq("id", id);
   if (error) throw error;
+
+  // Deduct stock only when order is delivered (completed)
+  if (status === "delivered" && orderData?.items) {
+    const items = orderData.items as { productId?: string; quantity: number }[];
+    for (const item of items) {
+      if (item.productId) {
+        const { data: product } = await supabase
+          .from("products")
+          .select("stock")
+          .eq("id", item.productId)
+          .single();
+        if (product) {
+          const newStock = Math.max(0, (product.stock || 0) - item.quantity);
+          await supabase
+            .from("products")
+            .update({ stock: newStock })
+            .eq("id", item.productId);
+        }
+      }
+    }
+    cacheInvalidateProducts();
+  }
+
   cacheSet(CACHE_KEYS.ORDERS, null, 0);
 }
 

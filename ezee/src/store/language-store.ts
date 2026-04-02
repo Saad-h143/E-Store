@@ -17,18 +17,16 @@ export const useLanguageStore = create<LanguageState>()(
 
       setLocale: (locale: Locale) => {
         set({ locale, t: translations[locale] });
+        try { localStorage.setItem("ezee-language-manual", "true"); } catch {}
       },
 
       detectLanguage: async () => {
         // Only auto-detect if user hasn't manually chosen a language
         try {
-          const stored = localStorage.getItem("ezee-language");
-          if (stored) {
-            const parsed = JSON.parse(stored);
-            if (parsed?.state?.locale) return; // User already chose
-          }
+          const manuallyChosen = localStorage.getItem("ezee-language-manual");
+          if (manuallyChosen === "true") return; // User already chose manually
         } catch {
-          // ignore parse errors
+          // ignore
         }
 
         try {
