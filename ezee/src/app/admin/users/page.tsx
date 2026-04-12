@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Users,
   Search,
@@ -42,6 +42,8 @@ export default function AdminUsersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
 
   useEffect(() => {
@@ -88,6 +90,13 @@ export default function AdminUsersPage() {
       (u.phone && u.phone.includes(search)) ||
       getUserPhone(u.id).includes(search)
   );
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   const selectedUserOrders = selectedUser ? getUserOrders(selectedUser.id) : [];
   const selectedUserStats = selectedUser ? getUserStats(selectedUser.id) : { orderCount: 0, totalSpent: 0 };
@@ -154,7 +163,7 @@ export default function AdminUsersPage() {
 
           {/* Table Rows */}
           <div className="divide-y divide-border/50">
-            {filtered.map((user) => {
+            {paginated.map((user) => {
               const stats = getUserStats(user.id);
               return (
                 <div
@@ -211,6 +220,18 @@ export default function AdminUsersPage() {
           </div>
         </div>
       )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-4">
+          <Button variant="outline" size="sm" className="h-8 rounded-lg" disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>Previous</Button>
+          <span className="text-sm text-muted-foreground px-2">Page {currentPage} of {totalPages}</span>
+          <Button variant="outline" size="sm" className="h-8 rounded-lg" disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>Next</Button>
+        </div>
+      )}
+
+      <p className="text-xs text-muted-foreground">
+        Showing {paginated.length} of {filtered.length} users
+      </p>
 
       {/* User Detail Dialog */}
       <Dialog open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>

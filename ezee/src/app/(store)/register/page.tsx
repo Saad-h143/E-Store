@@ -319,7 +319,7 @@ export default function RegisterPage() {
           </div>
 
           {/* Form card */}
-          <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-6 lg:p-8 xl:p-10 shadow-xl shadow-black/5 dark:shadow-black/20">
+          <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-5 lg:p-7 xl:p-8 shadow-xl shadow-black/5 dark:shadow-black/20">
             <AnimatePresence mode="wait">
               {step === "form" ? (
                 <motion.div
@@ -328,8 +328,8 @@ export default function RegisterPage() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                 >
-                  <div className="mb-6">
-                    <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">{t.register.title}</h1>
+                  <div className="mb-4">
+                    <h1 className="text-xl lg:text-2xl font-bold tracking-tight">{t.register.title}</h1>
                     <p className="text-sm text-muted-foreground mt-1">
                       {t.register.subtitle}
                     </p>
@@ -357,7 +357,7 @@ export default function RegisterPage() {
                   </Button>
 
                   {/* Divider */}
-                  <div className="relative my-5">
+                  <div className="relative my-3">
                     <div className="absolute inset-0 flex items-center">
                       <div className="w-full border-t border-border/50" />
                     </div>
@@ -368,8 +368,8 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
-                  <form onSubmit={handleSendOtp} className="space-y-3">
-                    <div className="space-y-1.5">
+                  <form onSubmit={handleSendOtp} className="space-y-2.5">
+                    <div className="space-y-1">
                       <Label htmlFor="name" className="text-sm font-medium">{t.register.fullName}</Label>
                       <Input
                         id="name"
@@ -381,7 +381,7 @@ export default function RegisterPage() {
                       />
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <Label htmlFor="email" className="text-sm font-medium">{t.register.email}</Label>
                       <Input
                         id="email"
@@ -394,7 +394,7 @@ export default function RegisterPage() {
                       />
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <Label htmlFor="password" className="text-sm font-medium">{t.register.password}</Label>
                       <div className="relative">
                         <Input
@@ -418,7 +418,7 @@ export default function RegisterPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <Label htmlFor="confirmPassword" className="text-sm font-medium">{t.register.confirmPassword}</Label>
                       <Input
                         id="confirmPassword"
@@ -447,7 +447,7 @@ export default function RegisterPage() {
                     </Button>
                   </form>
 
-                  <div className="mt-5 pt-5 border-t border-border/50 text-center">
+                  <div className="mt-4 pt-4 border-t border-border/50 text-center">
                     <p className="text-sm text-muted-foreground">
                       {t.register.haveAccount}{" "}
                       <Link href="/login" className="text-primary font-semibold hover:text-primary/80 transition-colors cursor-pointer">

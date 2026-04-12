@@ -48,6 +48,8 @@ import { toast } from "sonner";
 export default function AdminProductsPage() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   const [productList, setProductList] = useState<Product[]>([]);
   const [categoryList, setCategoryList] = useState<Category[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -88,6 +90,13 @@ export default function AdminProductsPage() {
     const matchCategory = categoryFilter === "all" || p.categoryId === categoryFilter;
     return matchSearch && matchCategory;
   });
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, categoryFilter]);
 
   const toggleActive = async (id: string, currentActive: boolean) => {
     // Optimistic update — change UI instantly
@@ -206,7 +215,7 @@ export default function AdminProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {filtered.map((product, index) => {
+              {paginated.map((product, index) => {
                 const cat = categoryList.find((c) => c.id === product.categoryId);
                 return (
                   <motion.tr
@@ -362,8 +371,16 @@ export default function AdminProductsPage() {
         )}
       </div>
 
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-4">
+          <Button variant="outline" size="sm" className="h-8 rounded-lg" disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>Previous</Button>
+          <span className="text-sm text-muted-foreground px-2">Page {currentPage} of {totalPages}</span>
+          <Button variant="outline" size="sm" className="h-8 rounded-lg" disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>Next</Button>
+        </div>
+      )}
+
       <p className="text-xs text-muted-foreground">
-        Showing {filtered.length} of {productList.length} products
+        Showing {paginated.length} of {filtered.length} products
       </p>
 
       {/* Activate/Deactivate Confirmation */}

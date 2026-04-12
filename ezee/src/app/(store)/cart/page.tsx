@@ -5,11 +5,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, AlertCircle, Loader2, CheckCircle, Copy, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useCartStore, getDiscountedPrice, formatPrice } from "@/store/cart-store";
 import { useAuthStore } from "@/store/auth-store";
 import { createOrder } from "@/lib/supabase/queries";
@@ -22,6 +28,7 @@ export default function CartPage() {
   const { items, removeItem, updateQuantity, clearCart, getTotal } = useCartStore();
   const { isAuthenticated, user } = useAuthStore();
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string; total: number } | null>(null);
   const [shippingInfo, setShippingInfo] = useState({
     phone: "",
     address: "",
@@ -98,12 +105,7 @@ export default function CartPage() {
       }).catch(() => {});
 
       clearCart();
-      toast.success(t.cart.orderSuccess);
-      if (user.role === "admin") {
-        router.push("/admin/orders");
-      } else {
-        router.push("/account#orders");
-      }
+      setOrderSuccess({ orderNumber: orderNum, total: grandTotal });
     } catch (err) {
       console.error("Order error:", err);
       toast.error(t.cart.orderFailed);
@@ -111,6 +113,79 @@ export default function CartPage() {
       setPlacingOrder(false);
     }
   };
+
+  if (items.length === 0 && orderSuccess) {
+    return (
+      <Dialog open onOpenChange={(open) => {
+        if (!open) {
+          setOrderSuccess(null);
+          if (user?.role === "admin") {
+            router.push("/admin/orders");
+          } else {
+            router.push("/account#orders");
+          }
+        }
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-emerald-600">
+              <CheckCircle className="h-6 w-6" />
+              Order Placed Successfully!
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="rounded-xl bg-emerald-500/10 p-4 text-center">
+              <p className="text-xs text-muted-foreground">Order Number</p>
+              <p className="text-lg font-bold text-primary mt-1">{orderSuccess.orderNumber}</p>
+              <p className="text-sm font-semibold mt-1">Total: {formatPrice(orderSuccess.total)}</p>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Thank you for your order! To process and dispatch your order, please transfer the payment to the bank account below and upload your payment receipt.
+            </p>
+            <div className="rounded-xl border p-4 space-y-2">
+              <div className="flex items-center gap-2 mb-3">
+                <CreditCard className="h-4 w-4 text-primary" />
+                <p className="text-sm font-semibold">Bank Transfer Details</p>
+              </div>
+              <div className="space-y-1.5 text-sm">
+                {[
+                  { label: "Account Holder", value: "ABDULLAH MOBILES LIMITED" },
+                  { label: "Bank", value: "Wise" },
+                  { label: "IBAN", value: "BE92 9050 2646 3223" },
+                  { label: "BIC/SWIFT", value: "TRWIBEB1XXX" },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center justify-between">
+                    <span className="text-muted-foreground">{item.label}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-medium">{item.value}</span>
+                      <button onClick={() => { navigator.clipboard.writeText(item.value); toast.success(`${item.label} copied!`); }} className="text-muted-foreground hover:text-foreground cursor-pointer">
+                        <Copy className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-2">Rue du Trône 100, 3rd floor, Brussels 1050, Belgium</p>
+            </div>
+            <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/20 p-3">
+              <p className="text-xs text-emerald-700 dark:text-emerald-400">
+                You can also send your payment receipt via WhatsApp: <strong>+351 924 288 509</strong>
+              </p>
+            </div>
+            <Separator />
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1 rounded-xl cursor-pointer" onClick={() => { setOrderSuccess(null); router.push(user?.role === "admin" ? "/admin/orders" : "/account#orders"); }}>
+                View My Orders
+              </Button>
+              <Button className="flex-1 rounded-xl bg-gradient-to-r from-primary to-purple-600 text-white cursor-pointer" onClick={() => { setOrderSuccess(null); router.push("/shop"); }}>
+                Continue Shopping
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -352,6 +427,7 @@ export default function CartPage() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }

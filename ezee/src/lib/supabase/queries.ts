@@ -81,6 +81,8 @@ function mapOrder(row: Record<string, unknown>): Order {
     total: Number(row.total),
     status: (row.status as Order["status"]) || "pending",
     shippingAddress: (row.shipping_address as string) || "",
+    paymentProof: (row.payment_proof as string) || "",
+    paymentVerified: (row.payment_verified as boolean) || false,
     createdAt: row.created_at as string,
   };
 }
@@ -668,6 +670,24 @@ export async function updateOrderStatus(id: string, status: Order["status"]) {
     cacheInvalidateProducts();
   }
 
+  cacheSet(CACHE_KEYS.ORDERS, null, 0);
+}
+
+export async function uploadPaymentProof(orderId: string, proofUrl: string) {
+  const { error } = await supabase
+    .from("orders")
+    .update({ payment_proof: proofUrl })
+    .eq("id", orderId);
+  if (error) throw error;
+  cacheSet(CACHE_KEYS.ORDERS, null, 0);
+}
+
+export async function verifyPayment(orderId: string, verified: boolean) {
+  const { error } = await supabase
+    .from("orders")
+    .update({ payment_verified: verified })
+    .eq("id", orderId);
+  if (error) throw error;
   cacheSet(CACHE_KEYS.ORDERS, null, 0);
 }
 

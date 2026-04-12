@@ -67,6 +67,8 @@ export interface Order {
   total: number;
   status: "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled";
   shippingAddress: string;
+  paymentProof?: string;
+  paymentVerified?: boolean;
   createdAt: string;
 }
 

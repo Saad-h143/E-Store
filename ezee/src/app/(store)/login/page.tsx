@@ -195,16 +195,16 @@ export default function LoginPage() {
           </div>
 
           {/* Form card */}
-          <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-8 lg:p-10 xl:p-12 shadow-xl shadow-black/5 dark:shadow-black/20">
+          <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-5 lg:p-7 xl:p-8 shadow-xl shadow-black/5 dark:shadow-black/20">
             {/* Header */}
-            <div className="mb-8 lg:mb-10">
-              <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">{t.login.welcomeBack}</h1>
-              <p className="text-sm lg:text-base text-muted-foreground mt-1.5 lg:mt-2">
+            <div className="mb-5 lg:mb-6">
+              <h1 className="text-xl lg:text-2xl font-bold tracking-tight">{t.login.welcomeBack}</h1>
+              <p className="text-sm text-muted-foreground mt-1">
                 {t.login.subtitle}
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5 lg:space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">
                   {t.login.email}
@@ -276,7 +276,7 @@ export default function LoginPage() {
             </form>
 
             {/* Divider */}
-            <div className="relative my-6 lg:my-8">
+            <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-border/50" />
               </div>
@@ -308,7 +308,7 @@ export default function LoginPage() {
               {t.login.continueWithGoogle}
             </Button>
 
-            <div className="mt-6 pt-6 border-t border-border/50 text-center">
+            <div className="mt-4 pt-4 border-t border-border/50 text-center">
               <p className="text-sm text-muted-foreground">
                 {t.login.noAccount}{" "}
                 <Link
