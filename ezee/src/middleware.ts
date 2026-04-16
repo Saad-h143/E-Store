@@ -1,15 +1,6 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
-  const url = request.nextUrl.clone();
-
-  // Redirect www to non-www to prevent redirect loops
-  if (url.hostname.startsWith("www.")) {
-    url.hostname = url.hostname.replace(/^www\./, "");
-    return NextResponse.redirect(url, 308);
-  }
-
+export function middleware() {
   return NextResponse.next();
 }
 
