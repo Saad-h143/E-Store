@@ -234,7 +234,7 @@ export function Navbar() {
             </nav>
 
             {/* Right Side Actions */}
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-0">
               {/* Search - desktop only */}
               <Button
                 variant="ghost"
@@ -276,7 +276,7 @@ export function Navbar() {
               {/* Language Switcher */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl cursor-pointer hover:bg-accent/60 hidden md:flex">
+                  <Button variant="ghost" size="icon" className="h-9 w-8 sm:w-9 rounded-xl cursor-pointer hover:bg-accent/60 flex shrink-0">
                     <Globe className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -382,7 +382,11 @@ export function Navbar() {
                     )}
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-80 bg-background/98 backdrop-blur-2xl p-0 flex flex-col">
+                <SheetContent
+                  side="right"
+                  className="w-80 bg-background/98 backdrop-blur-2xl p-0 flex flex-col"
+                  onOpenAutoFocus={(e) => e.preventDefault()}
+                >
                   <SheetHeader className="p-6 pb-4 border-b border-border/50 shrink-0">
                     <SheetTitle>
                       <Logo size="sm" />
