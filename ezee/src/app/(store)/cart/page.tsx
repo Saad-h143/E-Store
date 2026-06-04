@@ -39,8 +39,7 @@ export default function CartPage() {
     address: "",
   });
   const total = getTotal();
-  const shipping = total > 25000 ? 0 : 499;
-  const grandTotal = total + shipping;
+  const grandTotal = total;
 
   const handleCheckout = async () => {
     // Logged-in users reuse their account name/email; guests provide their own.
@@ -335,21 +334,6 @@ export default function CartPage() {
                 </span>
                 <span className="font-medium">{formatPrice(total)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">{t.cart.shipping}</span>
-                <span className="font-medium">
-                  {shipping === 0 ? (
-                    <span className="text-emerald-600">{t.cart.free}</span>
-                  ) : (
-                    formatPrice(shipping)
-                  )}
-                </span>
-              </div>
-              {shipping > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {t.cart.freeShippingAbove.replace("{price}", formatPrice(25000))}
-                </p>
-              )}
             </div>
 
             <Separator />

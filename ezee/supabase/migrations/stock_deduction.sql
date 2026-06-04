@@ -10,3 +10,4 @@
 
 ALTER TABLE public.orders
   ADD COLUMN IF NOT EXISTS stock_deducted BOOLEAN NOT NULL DEFAULT false;
+x 
