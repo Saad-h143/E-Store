@@ -107,6 +107,13 @@ export const en = {
     phoneRequired: "Please enter a phone number.",
     orderSuccess: "Order placed successfully!",
     orderFailed: "Failed to place order. Please contact support.",
+    fullName: "Full Name",
+    fullNamePlaceholder: "Your full name",
+    emailAddress: "Email Address",
+    emailPlaceholder: "you@example.com",
+    nameRequired: "Please enter your name.",
+    emailInvalid: "Please enter a valid email address.",
+    guestCheckoutNote: "Checking out as guest. {link} to track all your orders.",
   },
   // Login
   login: {

@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Product } from "@/types";
 import { useCartStore, getDiscountedPrice, formatPrice } from "@/store/cart-store";
-import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +18,6 @@ interface ProductCardProps {
 
 export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const addItem = useCartStore((s) => s.addItem);
-  const { isAuthenticated } = useAuthStore();
 
   const discountedPrice = getDiscountedPrice(product);
   const hasDiscount = product.discount > 0;
@@ -29,10 +27,6 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!isAuthenticated) {
-      toast.error("Please login to add items to cart.");
-      return;
-    }
     if (isOutOfStock) {
       toast.error("This product is currently out of stock.");
       return;

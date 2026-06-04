@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, AlertCircle, Loader2, CheckCircle, Copy, CreditCard } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, AlertCircle, Loader2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,8 +19,11 @@ import {
 import { useCartStore, getDiscountedPrice, formatPrice } from "@/store/cart-store";
 import { useAuthStore } from "@/store/auth-store";
 import { createOrder } from "@/lib/supabase/queries";
+import { BankTransferDetails } from "@/components/common/payment-details";
 import { toast } from "sonner";
 import { useLanguageStore } from "@/store/language-store";
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function CartPage() {
   const { t } = useLanguageStore();
@@ -28,8 +31,10 @@ export default function CartPage() {
   const { items, removeItem, updateQuantity, clearCart, getTotal } = useCartStore();
   const { isAuthenticated, user } = useAuthStore();
   const [placingOrder, setPlacingOrder] = useState(false);
-  const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string; total: number } | null>(null);
+  const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string; total: number; email: string } | null>(null);
   const [shippingInfo, setShippingInfo] = useState({
+    name: "",
+    email: "",
     phone: "",
     address: "",
   });
@@ -38,17 +43,24 @@ export default function CartPage() {
   const grandTotal = total + shipping;
 
   const handleCheckout = async () => {
-    if (!isAuthenticated || !user) {
-      toast.error(t.cart.loginRequired);
+    // Logged-in users reuse their account name/email; guests provide their own.
+    const customerName = (user?.name || shippingInfo.name).trim();
+    const customerEmail = (user?.email || shippingInfo.email).trim();
+
+    if (!customerName) {
+      toast.error(t.cart.nameRequired);
       return;
     }
-
-    if (!shippingInfo.address.trim()) {
-      toast.error(t.cart.addressRequired);
+    if (!EMAIL_RE.test(customerEmail)) {
+      toast.error(t.cart.emailInvalid);
       return;
     }
     if (!shippingInfo.phone.trim()) {
       toast.error(t.cart.phoneRequired);
+      return;
+    }
+    if (!shippingInfo.address.trim()) {
+      toast.error(t.cart.addressRequired);
       return;
     }
 
@@ -64,9 +76,9 @@ export default function CartPage() {
 
     try {
       const order = await createOrder({
-        userId: user.id,
-        customerName: user.name,
-        customerEmail: user.email,
+        userId: user?.id ?? null,
+        customerName,
+        customerEmail,
         customerPhone: shippingInfo.phone,
         items: orderItems,
         total: grandTotal,
@@ -79,8 +91,8 @@ export default function CartPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customerName: user.name,
-          customerEmail: user.email,
+          customerName,
+          customerEmail,
           customerPhone: shippingInfo.phone,
           orderNumber: orderNum,
           items: orderItems,
@@ -94,8 +106,8 @@ export default function CartPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "order-confirmation",
-          customerName: user.name,
-          customerEmail: user.email,
+          customerName,
+          customerEmail,
           customerPhone: shippingInfo.phone,
           orderNumber: orderNum,
           items: orderItems,
@@ -105,7 +117,7 @@ export default function CartPage() {
       }).catch(() => {});
 
       clearCart();
-      setOrderSuccess({ orderNumber: orderNum, total: grandTotal });
+      setOrderSuccess({ orderNumber: orderNum, total: grandTotal, email: customerEmail });
     } catch (err) {
       console.error("Order error:", err);
       toast.error(t.cart.orderFailed);
@@ -121,8 +133,10 @@ export default function CartPage() {
           setOrderSuccess(null);
           if (user?.role === "admin") {
             router.push("/admin/orders");
-          } else {
+          } else if (user) {
             router.push("/account#orders");
+          } else {
+            router.push("/shop");
           }
         }
       }}>
@@ -142,40 +156,19 @@ export default function CartPage() {
             <p className="text-sm text-muted-foreground leading-relaxed">
               Thank you for your order! To process and dispatch your order, please transfer the payment to the bank account below and upload your payment receipt.
             </p>
-            <div className="rounded-xl border p-4 space-y-2">
-              <div className="flex items-center gap-2 mb-3">
-                <CreditCard className="h-4 w-4 text-primary" />
-                <p className="text-sm font-semibold">Bank Transfer Details</p>
+            <BankTransferDetails />
+            {!user && (
+              <div className="rounded-xl bg-primary/5 border border-primary/20 p-3">
+                <p className="text-xs text-muted-foreground">
+                  A confirmation was sent to <strong className="text-foreground">{orderSuccess.email}</strong>.
+                  Create an account with this email to track this and all your orders.
+                </p>
               </div>
-              <div className="space-y-1.5 text-sm">
-                {[
-                  { label: "Account Holder", value: "ABDULLAH MOBILES LIMITED" },
-                  { label: "Bank", value: "Wise" },
-                  { label: "IBAN", value: "BE92 9050 2646 3223" },
-                  { label: "BIC/SWIFT", value: "TRWIBEB1XXX" },
-                ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{item.label}</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-medium">{item.value}</span>
-                      <button onClick={() => { navigator.clipboard.writeText(item.value); toast.success(`${item.label} copied!`); }} className="text-muted-foreground hover:text-foreground cursor-pointer">
-                        <Copy className="h-3 w-3" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-2">Rue du Trône 100, 3rd floor, Brussels 1050, Belgium</p>
-            </div>
-            <div className="rounded-xl bg-emerald-500/5 border border-emerald-500/20 p-3">
-              <p className="text-xs text-emerald-700 dark:text-emerald-400">
-                You can also send your payment receipt via WhatsApp: <strong>+351 924 288 509</strong>
-              </p>
-            </div>
+            )}
             <Separator />
             <div className="flex gap-3">
-              <Button variant="outline" className="flex-1 rounded-xl cursor-pointer" onClick={() => { setOrderSuccess(null); router.push(user?.role === "admin" ? "/admin/orders" : "/account#orders"); }}>
-                View My Orders
+              <Button variant="outline" className="flex-1 rounded-xl cursor-pointer" onClick={() => { setOrderSuccess(null); router.push(user?.role === "admin" ? "/admin/orders" : user ? "/account#orders" : "/register"); }}>
+                {user ? "View My Orders" : "Track My Order"}
               </Button>
               <Button className="flex-1 rounded-xl bg-gradient-to-r from-primary to-purple-600 text-white cursor-pointer" onClick={() => { setOrderSuccess(null); router.push("/shop"); }}>
                 Continue Shopping
@@ -366,43 +359,69 @@ export default function CartPage() {
               <span className="text-primary">{formatPrice(grandTotal)}</span>
             </div>
 
-            {isAuthenticated && user && (
-              <div className="space-y-3">
-                <Separator />
-                <h3 className="font-semibold text-sm">{t.cart.shippingDetails}</h3>
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-xs">{t.cart.phoneNumber} *</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={shippingInfo.phone}
-                    onChange={(e) => setShippingInfo((p) => ({ ...p, phone: e.target.value }))}
-                    placeholder={t.cart.phonePlaceholder}
-                    className="h-9 rounded-xl text-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address" className="text-xs">{t.cart.shippingAddress} *</Label>
-                  <Input
-                    id="address"
-                    value={shippingInfo.address}
-                    onChange={(e) => setShippingInfo((p) => ({ ...p, address: e.target.value }))}
-                    placeholder={t.cart.addressPlaceholder}
-                    className="h-9 rounded-xl text-sm"
-                  />
-                </div>
+            <div className="space-y-3">
+              <Separator />
+              <h3 className="font-semibold text-sm">{t.cart.shippingDetails}</h3>
+
+              {/* Guests provide name + email; logged-in users reuse their account. */}
+              {!isAuthenticated && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-xs">{t.cart.fullName} *</Label>
+                    <Input
+                      id="name"
+                      value={shippingInfo.name}
+                      onChange={(e) => setShippingInfo((p) => ({ ...p, name: e.target.value }))}
+                      placeholder={t.cart.fullNamePlaceholder}
+                      className="h-9 rounded-xl text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-xs">{t.cart.emailAddress} *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={shippingInfo.email}
+                      onChange={(e) => setShippingInfo((p) => ({ ...p, email: e.target.value }))}
+                      placeholder={t.cart.emailPlaceholder}
+                      className="h-9 rounded-xl text-sm"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-xs">{t.cart.phoneNumber} *</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={shippingInfo.phone}
+                  onChange={(e) => setShippingInfo((p) => ({ ...p, phone: e.target.value }))}
+                  placeholder={t.cart.phonePlaceholder}
+                  className="h-9 rounded-xl text-sm"
+                />
               </div>
-            )}
+              <div className="space-y-2">
+                <Label htmlFor="address" className="text-xs">{t.cart.shippingAddress} *</Label>
+                <Input
+                  id="address"
+                  value={shippingInfo.address}
+                  onChange={(e) => setShippingInfo((p) => ({ ...p, address: e.target.value }))}
+                  placeholder={t.cart.addressPlaceholder}
+                  className="h-9 rounded-xl text-sm"
+                />
+              </div>
+            </div>
 
             {!isAuthenticated && (
               <div className="flex items-center gap-2 text-muted-foreground bg-muted/50 px-3 py-2.5 rounded-xl border border-dashed text-xs">
                 <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                 <span>
-                  {t.cart.pleaseLogin.split("{link}")[0]}
+                  {t.cart.guestCheckoutNote.split("{link}")[0]}
                   <Link href="/login" className="text-primary font-medium underline underline-offset-2">
                     {t.cart.loginLink}
                   </Link>
-                  {t.cart.pleaseLogin.split("{link}")[1]}
+                  {t.cart.guestCheckoutNote.split("{link}")[1]}
                 </span>
               </div>
             )}
@@ -410,7 +429,7 @@ export default function CartPage() {
             <Button
               size="lg"
               className="w-full h-12 rounded-xl font-semibold bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 text-white"
-              disabled={!isAuthenticated || placingOrder}
+              disabled={placingOrder}
               onClick={handleCheckout}
             >
               {placingOrder ? (
@@ -418,10 +437,8 @@ export default function CartPage() {
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   {t.cart.placingOrder}
                 </>
-              ) : isAuthenticated ? (
-                t.cart.placeOrder
               ) : (
-                t.cart.loginToCheckout
+                t.cart.placeOrder
               )}
             </Button>
           </div>

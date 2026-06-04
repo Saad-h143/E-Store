@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/store/auth-store";
 import { getUserOrders } from "@/lib/supabase/queries";
+import { PaymentDetailsDialog } from "@/components/common/payment-details";
 import { formatPrice } from "@/store/cart-store";
 import Link from "next/link";
 import type { Order } from "@/types";
@@ -66,14 +67,14 @@ export default function AccountPage() {
   useEffect(() => {
     async function loadOrders() {
       if (user) {
-        const data = await getUserOrders(user.id);
+        const data = await getUserOrders();
         setUserOrders(data);
       }
       setOrdersLoading(false);
     }
     loadOrders();
     // Refresh on tab focus to get latest status
-    const handleFocus = () => { if (user) getUserOrders(user.id).then(setUserOrders); };
+    const handleFocus = () => { if (user) getUserOrders().then(setUserOrders); };
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
   }, [user]);
@@ -212,7 +213,8 @@ export default function AccountPage() {
 
                     {/* Payment Proof Section */}
                     {order.status !== "cancelled" && (
-                      <div className="pt-2">
+                      <div className="pt-2 space-y-2">
+                        {!order.paymentVerified && <PaymentDetailsDialog />}
                         {order.paymentVerified ? (
                           <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded-lg px-3 py-2">
                             <CheckCircle className="h-4 w-4" />

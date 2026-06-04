@@ -594,18 +594,27 @@ export async function getProductSalesMap(): Promise<Record<string, { totalSold: 
   return salesMap;
 }
 
-export async function getUserOrders(userId: string): Promise<Order[]> {
-  const { data, error } = await supabase
-    .from("orders")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
-  if (error) return [];
-  return (data || []).map(mapOrder);
+// Fetch the signed-in user's orders, matched by account id AND by account email
+// so that orders placed as a guest with the same email also show up. This goes
+// through a service-role server route (/api/orders/mine) which authenticates via
+// the session token, so it works regardless of RLS policy configuration.
+export async function getUserOrders(): Promise<Order[]> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) return [];
+
+  const res = await fetch("/api/orders/mine", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) return [];
+  const result = await res.json().catch(() => ({}));
+  return (result.orders || []).map(mapOrder);
 }
 
+// Orders are created through a service-role server route so that guests
+// (user_id = null) can place orders despite RLS. userId is null for guests.
 export async function createOrder(order: {
-  userId: string;
+  userId: string | null;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
@@ -613,29 +622,46 @@ export async function createOrder(order: {
   total: number;
   shippingAddress: string;
 }) {
-  const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
-  const { data, error } = await supabase
-    .from("orders")
-    .insert({
-      order_number: orderNumber,
-      user_id: order.userId,
-      customer_name: order.customerName,
-      customer_email: order.customerEmail,
-      customer_phone: order.customerPhone,
-      items: order.items,
-      total: order.total,
-      shipping_address: order.shippingAddress,
-    })
-    .select()
-    .single();
-  if (error) throw error;
+  const res = await fetch("/api/orders/create", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(order),
+  });
+  const result = await res.json().catch(() => ({}));
+  if (!res.ok || !result.order) {
+    throw new Error(result.error || "Failed to create order");
+  }
 
   cacheSet(CACHE_KEYS.ORDERS, null, 0);
-  return mapOrder(data);
+  return mapOrder(result.order);
+}
+
+// Adjust product stock for a set of order items.
+// delta = -1 deducts (a sale), delta = +1 restores (a cancellation/refund).
+async function adjustProductStock(
+  items: { productId?: string; quantity: number }[],
+  delta: number
+) {
+  for (const item of items) {
+    if (!item.productId) continue;
+    const { data: product } = await supabase
+      .from("products")
+      .select("stock")
+      .eq("id", item.productId)
+      .single();
+    if (product) {
+      const newStock = Math.max(0, (product.stock || 0) + delta * item.quantity);
+      await supabase
+        .from("products")
+        .update({ stock: newStock })
+        .eq("id", item.productId);
+    }
+  }
+  cacheInvalidateProducts();
 }
 
 export async function updateOrderStatus(id: string, status: Order["status"]) {
-  // Fetch the order first to get items (needed for stock deduction)
+  // Fetch the order first (needed to restore stock on cancellation)
   const { data: orderData } = await supabase
     .from("orders")
     .select("*")
@@ -648,26 +674,13 @@ export async function updateOrderStatus(id: string, status: Order["status"]) {
     .eq("id", id);
   if (error) throw error;
 
-  // Deduct stock only when order is delivered (completed)
-  if (status === "delivered" && orderData?.items) {
-    const items = orderData.items as { productId?: string; quantity: number }[];
-    for (const item of items) {
-      if (item.productId) {
-        const { data: product } = await supabase
-          .from("products")
-          .select("stock")
-          .eq("id", item.productId)
-          .single();
-        if (product) {
-          const newStock = Math.max(0, (product.stock || 0) - item.quantity);
-          await supabase
-            .from("products")
-            .update({ stock: newStock })
-            .eq("id", item.productId);
-        }
-      }
-    }
-    cacheInvalidateProducts();
+  // If a cancelled order had its stock already deducted, put the stock back.
+  if (status === "cancelled" && orderData?.stock_deducted && orderData?.items) {
+    await adjustProductStock(
+      orderData.items as { productId?: string; quantity: number }[],
+      +1
+    );
+    await supabase.from("orders").update({ stock_deducted: false }).eq("id", id);
   }
 
   cacheSet(CACHE_KEYS.ORDERS, null, 0);
@@ -683,11 +696,30 @@ export async function uploadPaymentProof(orderId: string, proofUrl: string) {
 }
 
 export async function verifyPayment(orderId: string, verified: boolean) {
+  // Fetch first so we know whether stock was already deducted (idempotency).
+  const { data: orderData } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("id", orderId)
+    .single();
+
   const { error } = await supabase
     .from("orders")
     .update({ payment_verified: verified })
     .eq("id", orderId);
   if (error) throw error;
+
+  const items = (orderData?.items as { productId?: string; quantity: number }[]) || [];
+  if (verified && orderData && !orderData.stock_deducted) {
+    // Payment confirmed -> deduct stock once and mark it.
+    await adjustProductStock(items, -1);
+    await supabase.from("orders").update({ stock_deducted: true }).eq("id", orderId);
+  } else if (!verified && orderData?.stock_deducted) {
+    // Payment un-verified -> give the stock back.
+    await adjustProductStock(items, +1);
+    await supabase.from("orders").update({ stock_deducted: false }).eq("id", orderId);
+  }
+
   cacheSet(CACHE_KEYS.ORDERS, null, 0);
 }
 

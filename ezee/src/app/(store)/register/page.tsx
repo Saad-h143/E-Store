@@ -47,7 +47,10 @@ export default function RegisterPage() {
     return () => clearInterval(interval);
   }, [resendTimer]);
 
-  const handleSendOtp = async (e: React.FormEvent) => {
+  // Email OTP verification is temporarily disabled — register directly.
+  // The OTP "verify" step (handleSendOtp/handleResend/handleVerifyAndRegister
+  // and its JSX) is kept intact below so it can be re-enabled later.
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !password) {
       toast.error(t.register.fillAllFields);
@@ -64,20 +67,12 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/email/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "send", email, name }),
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        toast.success(t.register.codeSent);
-        setStep("verify");
-        setResendTimer(60);
-        setTimeout(() => inputRefs.current[0]?.focus(), 100);
+      const result = await register(name, email, password);
+      if (result.success) {
+        toast.success(t.register.accountCreated);
+        router.push("/");
       } else {
-        toast.error(data.error || t.register.codeFailed);
+        toast.error(result.error || t.register.registrationFailed);
       }
     } catch {
       toast.error(t.register.somethingWrong);
@@ -368,7 +363,7 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
-                  <form onSubmit={handleSendOtp} className="space-y-2.5">
+                  <form onSubmit={handleRegister} className="space-y-2.5">
                     <div className="space-y-1">
                       <Label htmlFor="name" className="text-sm font-medium">{t.register.fullName}</Label>
                       <Input
@@ -437,10 +432,10 @@ export default function RegisterPage() {
                       disabled={loading}
                     >
                       {loading ? (
-                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t.register.sendingCode}</>
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t.login.createAccount}</>
                       ) : (
                         <>
-                          {t.register.continue}
+                          {t.login.createAccount}
                           <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
                         </>
                       )}

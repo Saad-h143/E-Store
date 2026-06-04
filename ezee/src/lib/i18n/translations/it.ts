@@ -103,6 +103,13 @@ export const it = {
     phoneRequired: "Inserisci un numero di telefono.",
     orderSuccess: "Ordine effettuato con successo!",
     orderFailed: "Ordine non riuscito. Contatta il supporto.",
+    fullName: "Nome completo",
+    fullNamePlaceholder: "Il tuo nome completo",
+    emailAddress: "Indirizzo email",
+    emailPlaceholder: "tu@esempio.com",
+    nameRequired: "Inserisci il tuo nome.",
+    emailInvalid: "Inserisci un indirizzo email valido.",
+    guestCheckoutNote: "Acquisto come ospite. {link} per tracciare tutti i tuoi ordini.",
   },
   login: {
     welcomeBack: "Bentornato",

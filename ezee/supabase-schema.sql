@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
   total NUMERIC NOT NULL DEFAULT 0,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','confirmed','processing','shipped','delivered','cancelled')),
   shipping_address TEXT DEFAULT '',
+  stock_deducted BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -126,10 +127,15 @@ CREATE POLICY "Admins can delete banners" ON public.banners FOR DELETE USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
--- ORDERS: users see own orders, admins see all
+-- ORDERS: users see own orders (matched by user_id OR account email, so guest
+-- orders placed with the same email show up after sign-in), admins see all.
 CREATE POLICY "Users can view own orders" ON public.orders FOR SELECT USING (
-  auth.uid() = user_id OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+  auth.uid() = user_id
+  OR lower(customer_email) = lower(auth.jwt() ->> 'email')
+  OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
+-- Logged-in users may still create their own orders directly; guest orders are
+-- created with the service-role key server-side (see /api/orders/create).
 CREATE POLICY "Authenticated users can create orders" ON public.orders FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Admins can update orders" ON public.orders FOR UPDATE USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')

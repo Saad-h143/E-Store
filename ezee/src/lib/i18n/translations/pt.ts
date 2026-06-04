@@ -109,6 +109,13 @@ export const pt: Translations = {
     phoneRequired: "Por favor, introduza um número de telefone.",
     orderSuccess: "Pedido realizado com sucesso!",
     orderFailed: "Falha ao realizar o pedido. Por favor, contacte o suporte.",
+    fullName: "Nome completo",
+    fullNamePlaceholder: "O teu nome completo",
+    emailAddress: "Endereço de e-mail",
+    emailPlaceholder: "tu@exemplo.com",
+    nameRequired: "Por favor, introduz o teu nome.",
+    emailInvalid: "Por favor, introduz um e-mail válido.",
+    guestCheckoutNote: "A comprar como convidado. {link} para acompanhar todos os teus pedidos.",
   },
   // Login
   login: {

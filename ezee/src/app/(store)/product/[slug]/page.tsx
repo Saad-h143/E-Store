@@ -25,7 +25,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ProductCard } from "@/components/product/product-card";
 import { getProductBySlug, getProducts, getCategories } from "@/lib/supabase/queries";
 import { useCartStore, getDiscountedPrice, formatPrice } from "@/store/cart-store";
-import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Product, Category } from "@/types";
@@ -42,7 +41,6 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
 
   const addItem = useCartStore((s) => s.addItem);
-  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     async function load() {
@@ -101,20 +99,12 @@ export default function ProductDetailPage() {
   const isOutOfStock = product.stock <= 0;
 
   const handleAddToCart = () => {
-    if (!isAuthenticated) {
-      toast.error("Please login to add items to cart.");
-      return;
-    }
     if (isOutOfStock) return;
     addItem(product, quantity);
     toast.success(`${product.title} added to cart!`);
   };
 
   const handleBuyNow = () => {
-    if (!isAuthenticated) {
-      toast.error("Please login to place an order.");
-      return;
-    }
     if (isOutOfStock) return;
     addItem(product, quantity);
     window.location.href = "/cart";
@@ -238,20 +228,11 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {!isAuthenticated && (
-              <div className="flex items-center gap-2 text-muted-foreground bg-muted/50 px-4 py-3 rounded-xl border border-dashed">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                <span className="text-sm">
-                  Please <Link href="/login" className="text-primary font-medium underline underline-offset-4">login</Link> to place an order.
-                </span>
-              </div>
-            )}
-
             <div className="flex gap-3">
-              <Button size="lg" className="flex-1 h-12 rounded-xl text-sm font-semibold bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 text-white" disabled={isOutOfStock || !isAuthenticated} onClick={handleAddToCart}>
+              <Button size="lg" className="flex-1 h-12 rounded-xl text-sm font-semibold bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 text-white" disabled={isOutOfStock} onClick={handleAddToCart}>
                 <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
               </Button>
-              <Button size="lg" variant="secondary" className="flex-1 h-12 rounded-xl text-sm font-semibold" disabled={isOutOfStock || !isAuthenticated} onClick={handleBuyNow}>
+              <Button size="lg" variant="secondary" className="flex-1 h-12 rounded-xl text-sm font-semibold" disabled={isOutOfStock} onClick={handleBuyNow}>
                 Buy Now
               </Button>
             </div>
