@@ -18,7 +18,6 @@ import {
   Home,
   Users,
   BarChart3,
-  CreditCard,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -39,7 +38,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin", icon: LayoutDashboard, label: t.admin.dashboard },
     { href: "/admin/products", icon: Package, label: t.admin.products },
     { href: "/admin/orders", icon: ShoppingCart, label: t.admin.orders },
-    { href: "/admin/payments", icon: CreditCard, label: "Payments" },
     { href: "/admin/categories", icon: FolderTree, label: t.admin.categories },
     { href: "/admin/banners", icon: ImageIcon, label: t.admin.banners },
     { href: "/admin/users", icon: Users, label: t.admin.users },

@@ -116,6 +116,10 @@ export const pt: Translations = {
     nameRequired: "Por favor, introduz o teu nome.",
     emailInvalid: "Por favor, introduz um e-mail válido.",
     guestCheckoutNote: "A comprar como convidado. {link} para acompanhar todos os teus pedidos.",
+    paymentMethod: "Método de pagamento",
+    payByCard: "Cartão",
+    cashOnDelivery: "Pagamento na entrega",
+    continueToPayment: "Continuar para o pagamento",
   },
   // Login
   login: {

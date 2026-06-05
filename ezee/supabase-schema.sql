@@ -73,6 +73,8 @@ CREATE TABLE IF NOT EXISTS public.orders (
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','confirmed','processing','shipped','delivered','cancelled')),
   shipping_address TEXT DEFAULT '',
   stock_deducted BOOLEAN NOT NULL DEFAULT false,
+  payment_method TEXT NOT NULL DEFAULT 'cod',
+  payment_intent_id TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

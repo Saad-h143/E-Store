@@ -110,6 +110,10 @@ export const de = {
     nameRequired: "Bitte gib deinen Namen ein.",
     emailInvalid: "Bitte gib eine gültige E-Mail-Adresse ein.",
     guestCheckoutNote: "Bestellung als Gast. {link}, um alle deine Bestellungen zu verfolgen.",
+    paymentMethod: "Zahlungsmethode",
+    payByCard: "Karte",
+    cashOnDelivery: "Nachnahme",
+    continueToPayment: "Weiter zur Zahlung",
   },
   login: {
     welcomeBack: "Willkommen zurück",

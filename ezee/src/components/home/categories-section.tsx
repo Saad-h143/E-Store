@@ -31,14 +31,20 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
               href={`/shop?category=${category.slug}`}
               className="group relative flex flex-col items-center justify-center gap-3 rounded-2xl border bg-card p-6 transition-all hover:bg-card/80 hover:backdrop-blur-xl hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 hover:border-primary/30 cursor-pointer"
             >
-              <div className="relative h-20 w-20 rounded-xl overflow-hidden bg-gradient-to-br from-muted/50 to-muted">
-                <Image
-                  src={category.image}
-                  alt={category.name}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-110"
-                  sizes="80px"
-                />
+              <div className="relative h-20 w-20 rounded-xl overflow-hidden bg-gradient-to-br from-muted/50 to-muted flex items-center justify-center">
+                {category.image ? (
+                  <Image
+                    src={category.image}
+                    alt={category.name}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-110"
+                    sizes="80px"
+                  />
+                ) : (
+                  <span className="text-2xl font-bold text-muted-foreground">
+                    {category.name.charAt(0).toUpperCase()}
+                  </span>
+                )}
               </div>
               <div className="text-center">
                 <h3 className="font-semibold text-sm">{category.name}</h3>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Search, Eye, Loader2, Package, FileImage, CheckCircle, XCircle } from "lucide-react";
+import { Search, Eye, Loader2, Package, CreditCard, Banknote } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getOrders, updateOrderStatus, verifyPayment } from "@/lib/supabase/queries";
+import { getOrders, updateOrderStatus } from "@/lib/supabase/queries";
 import { formatPrice } from "@/store/cart-store";
 import { toast } from "sonner";
 import type { Order } from "@/types";
@@ -73,7 +73,7 @@ export default function AdminOrdersPage() {
     // Auto-refresh when tab regains focus
     const handleFocus = () => loadOrders();
     window.addEventListener("focus", handleFocus);
-    // Also poll every 30 seconds for new payment proofs
+    // Also poll every 30 seconds for order updates
     const interval = setInterval(loadOrders, 30000);
     return () => {
       window.removeEventListener("focus", handleFocus);
@@ -132,39 +132,6 @@ export default function AdminOrdersPage() {
         );
       }
       toast.error("Failed to update order status");
-    }
-  };
-
-  const handleVerifyPayment = async (orderId: string, verified: boolean) => {
-    setOrderList((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, paymentVerified: verified } : o))
-    );
-    const order = orderList.find((o) => o.id === orderId);
-    toast.success(verified ? "Payment verified!" : "Payment verification removed");
-
-    try {
-      await verifyPayment(orderId, verified);
-
-      // Send payment verified email
-      if (verified && order) {
-        fetch("/api/email/status-update", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            customerName: order.customerName,
-            customerEmail: order.customerEmail,
-            orderNumber: order.orderNumber,
-            status: "payment_verified",
-            items: order.items,
-            total: order.total,
-          }),
-        }).catch(() => {});
-      }
-    } catch {
-      setOrderList((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, paymentVerified: !verified } : o))
-      );
-      toast.error("Failed to update payment status");
     }
   };
 
@@ -275,17 +242,19 @@ export default function AdminOrdersPage() {
                   </td>
                   <td className="px-5 py-3 text-sm font-medium">{formatPrice(order.total)}</td>
                   <td className="px-5 py-3">
-                    {order.paymentVerified ? (
-                      <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-0 text-xs gap-1">
-                        <CheckCircle className="h-3 w-3" /> Verified
-                      </Badge>
-                    ) : order.paymentProof ? (
-                      <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-0 text-xs gap-1">
-                        <FileImage className="h-3 w-3" /> Uploaded
-                      </Badge>
+                    {order.paymentMethod === "card" ? (
+                      order.paymentVerified ? (
+                        <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-0 text-xs gap-1">
+                          <CreditCard className="h-3 w-3" /> Paid
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-red-500/10 text-red-600 dark:text-red-400 border-0 text-xs">
+                          Unpaid
+                        </Badge>
+                      )
                     ) : (
-                      <Badge className="bg-muted text-muted-foreground border-0 text-xs">
-                        Awaiting
+                      <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-0 text-xs gap-1">
+                        <Banknote className="h-3 w-3" /> COD
                       </Badge>
                     )}
                   </td>
@@ -347,6 +316,12 @@ export default function AdminOrdersPage() {
                             <p>
                               <strong>Address:</strong> {order.shippingAddress}
                             </p>
+                            <p>
+                              <strong>Payment:</strong>{" "}
+                              {order.paymentMethod === "card"
+                                ? `Card — ${order.paymentVerified ? "Paid" : "Unpaid"}`
+                                : "Cash on Delivery"}
+                            </p>
                           </div>
                           <Separator />
                           <div className="space-y-2">
@@ -365,62 +340,6 @@ export default function AdminOrdersPage() {
                           <div className="flex justify-between font-semibold">
                             <span>Total</span>
                             <span className="text-primary">{formatPrice(order.total)}</span>
-                          </div>
-
-                          {/* Payment Proof Section */}
-                          <Separator />
-                          <div>
-                            <p className="text-sm font-semibold mb-2">Payment Proof</p>
-                            {order.paymentProof ? (
-                              <div className="space-y-3">
-                                <a
-                                  href={order.paymentProof}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block rounded-xl overflow-hidden border hover:border-primary/50 transition-colors"
-                                >
-                                  <img
-                                    src={order.paymentProof}
-                                    alt="Payment proof"
-                                    className="w-full max-h-[200px] object-contain bg-muted"
-                                  />
-                                </a>
-                                <div className="flex gap-2">
-                                  {order.paymentVerified ? (
-                                    <div className="flex items-center gap-2 text-sm text-emerald-600 bg-emerald-500/10 rounded-lg px-3 py-2 flex-1">
-                                      <CheckCircle className="h-4 w-4" />
-                                      <span className="font-medium">Payment Verified</span>
-                                    </div>
-                                  ) : (
-                                    <>
-                                      <Button
-                                        size="sm"
-                                        className="flex-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white"
-                                        onClick={() => handleVerifyPayment(order.id, true)}
-                                      >
-                                        <CheckCircle className="h-4 w-4 mr-1.5" />
-                                        Verify Payment
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="rounded-lg text-destructive hover:text-destructive"
-                                        onClick={() => {
-                                          toast.info("Payment rejected — customer will need to re-upload");
-                                        }}
-                                      >
-                                        <XCircle className="h-4 w-4" />
-                                      </Button>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-3 text-center">
-                                <FileImage className="h-5 w-5 mx-auto mb-1 opacity-40" />
-                                No payment receipt uploaded yet
-                              </div>
-                            )}
                           </div>
                         </div>
                       </DialogContent>

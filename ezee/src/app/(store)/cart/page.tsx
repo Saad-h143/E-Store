@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, AlertCircle, Loader2, CheckCircle } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, AlertCircle, Loader2, CheckCircle, CreditCard, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +19,7 @@ import {
 import { useCartStore, getDiscountedPrice, formatPrice } from "@/store/cart-store";
 import { useAuthStore } from "@/store/auth-store";
 import { createOrder } from "@/lib/supabase/queries";
-import { BankTransferDetails } from "@/components/common/payment-details";
+import { CardPaymentDialog } from "@/components/checkout/card-payment-dialog";
 import { toast } from "sonner";
 import { useLanguageStore } from "@/store/language-store";
 
@@ -31,7 +31,9 @@ export default function CartPage() {
   const { items, removeItem, updateQuantity, clearCart, getTotal } = useCartStore();
   const { isAuthenticated, user } = useAuthStore();
   const [placingOrder, setPlacingOrder] = useState(false);
-  const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string; total: number; email: string } | null>(null);
+  const [orderSuccess, setOrderSuccess] = useState<{ orderNumber: string; total: number; email: string; method: "card" | "cod" } | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "cod">("card");
+  const [cardDialogOpen, setCardDialogOpen] = useState(false);
   const [shippingInfo, setShippingInfo] = useState({
     name: "",
     email: "",
@@ -41,28 +43,34 @@ export default function CartPage() {
   const total = getTotal();
   const grandTotal = total;
 
-  const handleCheckout = async () => {
-    // Logged-in users reuse their account name/email; guests provide their own.
-    const customerName = (user?.name || shippingInfo.name).trim();
-    const customerEmail = (user?.email || shippingInfo.email).trim();
+  // Logged-in users reuse their account name/email; guests provide their own.
+  const resolvedName = (user?.name || shippingInfo.name).trim();
+  const resolvedEmail = (user?.email || shippingInfo.email).trim();
 
-    if (!customerName) {
+  const validateCheckout = () => {
+    if (!resolvedName) {
       toast.error(t.cart.nameRequired);
-      return;
+      return false;
     }
-    if (!EMAIL_RE.test(customerEmail)) {
+    if (!EMAIL_RE.test(resolvedEmail)) {
       toast.error(t.cart.emailInvalid);
-      return;
+      return false;
     }
     if (!shippingInfo.phone.trim()) {
       toast.error(t.cart.phoneRequired);
-      return;
+      return false;
     }
     if (!shippingInfo.address.trim()) {
       toast.error(t.cart.addressRequired);
-      return;
+      return false;
     }
+    return true;
+  };
 
+  // Card payments are charged first (in the dialog), then this runs with the
+  // succeeded PaymentIntent id. COD orders skip straight here.
+  const placeOrder = async (method: "card" | "cod", paymentIntentId?: string) => {
+    if (!validateCheckout()) return;
     setPlacingOrder(true);
 
     const orderItems = items.map((item) => ({
@@ -76,12 +84,14 @@ export default function CartPage() {
     try {
       const order = await createOrder({
         userId: user?.id ?? null,
-        customerName,
-        customerEmail,
+        customerName: resolvedName,
+        customerEmail: resolvedEmail,
         customerPhone: shippingInfo.phone,
         items: orderItems,
         total: grandTotal,
         shippingAddress: shippingInfo.address,
+        paymentMethod: method,
+        paymentIntentId,
       });
 
       // Send email + WhatsApp in background (fire-and-forget)
@@ -90,8 +100,8 @@ export default function CartPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customerName,
-          customerEmail,
+          customerName: resolvedName,
+          customerEmail: resolvedEmail,
           customerPhone: shippingInfo.phone,
           orderNumber: orderNum,
           items: orderItems,
@@ -105,8 +115,8 @@ export default function CartPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "order-confirmation",
-          customerName,
-          customerEmail,
+          customerName: resolvedName,
+          customerEmail: resolvedEmail,
           customerPhone: shippingInfo.phone,
           orderNumber: orderNum,
           items: orderItems,
@@ -116,12 +126,25 @@ export default function CartPage() {
       }).catch(() => {});
 
       clearCart();
-      setOrderSuccess({ orderNumber: orderNum, total: grandTotal, email: customerEmail });
+      if (method === "card") {
+        toast.success("Payment successful! Your order has been placed.");
+      }
+      setOrderSuccess({ orderNumber: orderNum, total: grandTotal, email: resolvedEmail, method });
     } catch (err) {
       console.error("Order error:", err);
       toast.error(t.cart.orderFailed);
     } finally {
       setPlacingOrder(false);
+      setCardDialogOpen(false);
+    }
+  };
+
+  const handleCheckout = () => {
+    if (!validateCheckout()) return;
+    if (paymentMethod === "card") {
+      setCardDialogOpen(true); // collect card -> placeOrder("card", id) on success
+    } else {
+      placeOrder("cod");
     }
   };
 
@@ -153,9 +176,21 @@ export default function CartPage() {
               <p className="text-sm font-semibold mt-1">Total: {formatPrice(orderSuccess.total)}</p>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Thank you for your order! To process and dispatch your order, please transfer the payment to the bank account below and upload your payment receipt.
+              Thank you for your order! We&apos;ve received it and will prepare it for dispatch. We&apos;ll keep you updated by email.
             </p>
-            <BankTransferDetails />
+            <div className={`rounded-xl border p-3 flex items-center gap-2 ${orderSuccess.method === "card" ? "bg-emerald-500/5 border-emerald-500/20" : "bg-amber-500/5 border-amber-500/20"}`}>
+              {orderSuccess.method === "card" ? (
+                <>
+                  <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Payment received — your card was charged {formatPrice(orderSuccess.total)}.</p>
+                </>
+              ) : (
+                <>
+                  <Banknote className="h-4 w-4 text-amber-600 shrink-0" />
+                  <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">Cash on Delivery — please pay {formatPrice(orderSuccess.total)} when your order arrives.</p>
+                </>
+              )}
+            </div>
             {!user && (
               <div className="rounded-xl bg-primary/5 border border-primary/20 p-3">
                 <p className="text-xs text-muted-foreground">
@@ -397,6 +432,38 @@ export default function CartPage() {
               </div>
             </div>
 
+            {/* Payment method */}
+            <div className="space-y-2">
+              <Separator />
+              <h3 className="font-semibold text-sm">{t.cart.paymentMethod}</h3>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("card")}
+                  className={`flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 text-xs font-medium transition-colors cursor-pointer ${
+                    paymentMethod === "card"
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-border text-muted-foreground hover:border-primary/40"
+                  }`}
+                >
+                  <CreditCard className="h-5 w-5" />
+                  {t.cart.payByCard}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("cod")}
+                  className={`flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 text-xs font-medium transition-colors cursor-pointer ${
+                    paymentMethod === "cod"
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-border text-muted-foreground hover:border-primary/40"
+                  }`}
+                >
+                  <Banknote className="h-5 w-5" />
+                  {t.cart.cashOnDelivery}
+                </button>
+              </div>
+            </div>
+
             {!isAuthenticated && (
               <div className="flex items-center gap-2 text-muted-foreground bg-muted/50 px-3 py-2.5 rounded-xl border border-dashed text-xs">
                 <AlertCircle className="h-3.5 w-3.5 shrink-0" />
@@ -421,6 +488,11 @@ export default function CartPage() {
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   {t.cart.placingOrder}
                 </>
+              ) : paymentMethod === "card" ? (
+                <>
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  {t.cart.continueToPayment}
+                </>
               ) : (
                 t.cart.placeOrder
               )}
@@ -429,6 +501,13 @@ export default function CartPage() {
         </div>
       </div>
 
+      <CardPaymentDialog
+        open={cardDialogOpen}
+        onOpenChange={(o) => { if (!placingOrder) setCardDialogOpen(o); }}
+        amount={grandTotal}
+        email={resolvedEmail}
+        onSuccess={(paymentIntentId) => placeOrder("card", paymentIntentId)}
+      />
     </div>
   );
 }

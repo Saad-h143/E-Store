@@ -110,6 +110,10 @@ export const fr = {
     nameRequired: "Veuillez saisir votre nom.",
     emailInvalid: "Veuillez saisir une adresse e-mail valide.",
     guestCheckoutNote: "Commande en tant qu'invité. {link} pour suivre toutes vos commandes.",
+    paymentMethod: "Mode de paiement",
+    payByCard: "Carte",
+    cashOnDelivery: "Paiement à la livraison",
+    continueToPayment: "Continuer vers le paiement",
   },
   login: {
     welcomeBack: "Bon retour",

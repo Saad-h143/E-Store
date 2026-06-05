@@ -83,6 +83,8 @@ function mapOrder(row: Record<string, unknown>): Order {
     shippingAddress: (row.shipping_address as string) || "",
     paymentProof: (row.payment_proof as string) || "",
     paymentVerified: (row.payment_verified as boolean) || false,
+    paymentMethod: (row.payment_method as "card" | "cod") || "cod",
+    paymentIntentId: (row.payment_intent_id as string) || "",
     createdAt: row.created_at as string,
   };
 }
@@ -621,6 +623,8 @@ export async function createOrder(order: {
   items: Order["items"];
   total: number;
   shippingAddress: string;
+  paymentMethod: "card" | "cod";
+  paymentIntentId?: string;
 }) {
   const res = await fetch("/api/orders/create", {
     method: "POST",
@@ -771,24 +775,34 @@ export async function updateProfile(userId: string, updates: Partial<{ name: str
 // IMAGE UPLOAD
 // ============================================
 
+// Uploads to Cloudinary via an unsigned upload preset. Used by admin product,
+// banner and category forms. Returns the hosted secure_url.
 export async function uploadImage(file: File, folder: string = "products"): Promise<string> {
-  const ext = file.name.split(".").pop();
-  const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const preset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+  if (!cloudName || !preset) {
+    throw new Error("Cloudinary is not configured (missing cloud name or upload preset).");
+  }
 
-  const { error } = await supabase.storage
-    .from("product-images")
-    .upload(fileName, file, { cacheControl: "3600", upsert: false });
+  const form = new FormData();
+  form.append("file", file);
+  form.append("upload_preset", preset);
+  form.append("folder", `ezee/${folder}`);
 
-  if (error) throw error;
-
-  const { data } = supabase.storage
-    .from("product-images")
-    .getPublicUrl(fileName);
-
-  return data.publicUrl;
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+    { method: "POST", body: form }
+  );
+  const data = await res.json();
+  if (!res.ok || !data.secure_url) {
+    throw new Error(data?.error?.message || "Image upload failed.");
+  }
+  return data.secure_url as string;
 }
 
 export async function deleteImage(url: string) {
+  // Legacy Supabase-hosted images are removed from storage. Cloudinary assets
+  // require a signed server-side call to delete, so we just drop the reference.
   const match = url.match(/product-images\/(.+)$/);
   if (!match) return;
   const { error } = await supabase.storage

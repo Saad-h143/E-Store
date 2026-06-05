@@ -122,48 +122,9 @@ function orderConfirmationHtml(data: OrderEmailData) {
       <p style="margin:4px 0 0;color:#166534;">${data.shippingAddress}</p>
     </div>
 
-    <!-- Payment Instructions -->
-    <div style="margin-top:24px;padding:20px;background:linear-gradient(135deg,#fef3c7,#fef9c3);border-radius:12px;border:1px solid #f59e0b;">
-      <h3 style="margin:0 0 12px;color:#92400e;font-size:16px;font-weight:700;">Payment Required</h3>
-      <p style="margin:0 0 16px;color:#78350f;font-size:13px;line-height:1.6;">
-        Please transfer the payment to the bank account below and send the receipt/proof of payment before we can dispatch your order.
-      </p>
-
-      <div style="background:#fff;border-radius:8px;padding:14px;margin-bottom:12px;">
-        <table style="width:100%;border-collapse:collapse;font-size:13px;">
-          <tr>
-            <td style="padding:4px 0;color:#71717a;width:130px;">Account Holder</td>
-            <td style="padding:4px 0;font-weight:600;color:#18181b;">ABDULLAH MOBILES LIMITED</td>
-          </tr>
-          <tr>
-            <td style="padding:4px 0;color:#71717a;">Bank</td>
-            <td style="padding:4px 0;font-weight:600;color:#18181b;">Wise</td>
-          </tr>
-          <tr>
-            <td style="padding:4px 0;color:#71717a;">IBAN</td>
-            <td style="padding:4px 0;font-weight:600;color:#18181b;">BE92 9050 2646 3223</td>
-          </tr>
-          <tr>
-            <td style="padding:4px 0;color:#71717a;">BIC/SWIFT</td>
-            <td style="padding:4px 0;font-weight:600;color:#18181b;">TRWIBEB1XXX</td>
-          </tr>
-          <tr>
-            <td style="padding:4px 0;color:#71717a;">Bank Address</td>
-            <td style="padding:4px 0;font-weight:500;color:#52525b;font-size:12px;">Rue du Tr&ocirc;ne 100, 3rd floor, Brussels 1050, Belgium</td>
-          </tr>
-        </table>
-      </div>
-
-      <p style="margin:0 0 8px;color:#78350f;font-size:13px;font-weight:600;">How to send payment proof:</p>
-      <p style="margin:0;color:#78350f;font-size:13px;line-height:1.6;">
-        1. Upload the receipt from your <strong>My Orders</strong> section on our website<br>
-        2. Or send it via WhatsApp: <strong>+351 924 288 509</strong>
-      </p>
-    </div>
-
     <div style="margin-top:16px;padding:14px;background:#eff6ff;border-radius:12px;border-left:4px solid #3b82f6;">
       <p style="margin:0;color:#1e40af;font-size:13px;">
-        <strong>Note:</strong> Your order will be processed and dispatched once we verify your payment. You will receive a confirmation email after verification.
+        <strong>Note:</strong> We&rsquo;ve received your order and will prepare it for dispatch. You&rsquo;ll receive updates by email as your order progresses.
       </p>
     </div>
   `
@@ -178,8 +139,7 @@ function statusUpdateHtml(data: {
   total: number;
 }) {
   const statusConfig: Record<string, { color: string; bg: string; label: string; message: string }> = {
-    pending: { color: "#d97706", bg: "#fffbeb", label: "Pending", message: "Your order is pending and awaiting payment confirmation. Please upload your payment receipt to proceed." },
-    payment_verified: { color: "#16a34a", bg: "#f0fdf4", label: "Payment Verified", message: "Your payment has been successfully verified! We are now preparing your order for dispatch. Thank you for your payment." },
+    pending: { color: "#d97706", bg: "#fffbeb", label: "Pending", message: "Your order has been received and is pending review. We&rsquo;ll update you as it progresses." },
     confirmed: { color: "#2563eb", bg: "#eff6ff", label: "Confirmed", message: "Your order has been confirmed and is being prepared." },
     processing: { color: "#7c3aed", bg: "#f5f3ff", label: "Processing", message: "Your order is being processed and packed." },
     shipped: { color: "#0891b2", bg: "#ecfeff", label: "Shipped", message: "Your order has been shipped and is on its way!" },

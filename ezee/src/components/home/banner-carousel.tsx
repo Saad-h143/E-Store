@@ -47,15 +47,17 @@ export function BannerCarousel({ slides }: BannerCarouselProps) {
                   slide.gradient
                 )}
               >
-                {/* Background Image */}
-                <Image
-                  src={slide.image}
-                  alt={slide.title}
-                  fill
-                  className="object-cover opacity-30 mix-blend-luminosity"
-                  priority={index === 0}
-                  sizes="100vw"
-                />
+                {/* Background Image (only if the slide has one) */}
+                {slide.image && (
+                  <Image
+                    src={slide.image}
+                    alt={slide.title}
+                    fill
+                    className="object-cover opacity-30 mix-blend-luminosity"
+                    priority={index === 0}
+                    sizes="100vw"
+                  />
+                )}
 
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-purple-900/30 to-blue-900/20" />

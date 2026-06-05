@@ -3,14 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { User, Mail, Phone, Calendar, Shield, Package, LogOut, Upload, CheckCircle, Loader2, FileImage } from "lucide-react";
+import { Mail, Phone, Calendar, Shield, Package, LogOut, CreditCard, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/store/auth-store";
 import { getUserOrders } from "@/lib/supabase/queries";
-import { PaymentDetailsDialog } from "@/components/common/payment-details";
 import { formatPrice } from "@/store/cart-store";
 import Link from "next/link";
 import type { Order } from "@/types";
@@ -31,38 +29,6 @@ export default function AccountPage() {
   const { t } = useLanguageStore();
   const [userOrders, setUserOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
-  const [uploadingProof, setUploadingProof] = useState<string | null>(null);
-
-  const handleUploadProof = async (orderId: string, file: File) => {
-    setUploadingProof(orderId);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("orderId", orderId);
-
-      const res = await fetch("/api/orders/payment-proof", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        setUserOrders((prev) =>
-          prev.map((o) => (o.id === orderId ? { ...o, paymentProof: data.url } : o))
-        );
-        const { toast } = await import("sonner");
-        toast.success("Payment receipt uploaded successfully!");
-      } else {
-        const { toast } = await import("sonner");
-        toast.error("Failed to upload receipt");
-      }
-    } catch {
-      const { toast } = await import("sonner");
-      toast.error("Upload failed. Please try again.");
-    } finally {
-      setUploadingProof(null);
-    }
-  };
 
   useEffect(() => {
     async function loadOrders() {
@@ -211,75 +177,17 @@ export default function AccountPage() {
                       <span className="text-primary">{formatPrice(order.total)}</span>
                     </div>
 
-                    {/* Payment Proof Section */}
-                    {order.status !== "cancelled" && (
-                      <div className="pt-2 space-y-2">
-                        {!order.paymentVerified && <PaymentDetailsDialog />}
-                        {order.paymentVerified ? (
-                          <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded-lg px-3 py-2">
-                            <CheckCircle className="h-4 w-4" />
-                            <span className="font-medium">Payment Verified</span>
-                          </div>
-                        ) : order.paymentProof ? (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 bg-blue-500/10 rounded-lg px-3 py-2">
-                              <FileImage className="h-4 w-4" />
-                              <span className="font-medium">Receipt uploaded — awaiting verification</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <a
-                                href={order.paymentProof}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-primary hover:underline cursor-pointer"
-                              >
-                                View uploaded receipt
-                              </a>
-                              <label className="cursor-pointer">
-                                <input
-                                  type="file"
-                                  accept="image/*,.pdf"
-                                  className="hidden"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) handleUploadProof(order.id, file);
-                                  }}
-                                  disabled={uploadingProof === order.id}
-                                />
-                                <span className="text-xs text-destructive hover:underline">
-                                  {uploadingProof === order.id ? "Uploading..." : "Re-upload"}
-                                </span>
-                              </label>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
-                              Upload payment receipt to process your order
-                            </p>
-                            <label className="cursor-pointer">
-                              <input
-                                type="file"
-                                accept="image/*,.pdf"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) handleUploadProof(order.id, file);
-                                }}
-                                disabled={uploadingProof === order.id}
-                              />
-                              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-primary to-purple-600 text-white hover:opacity-90 transition-opacity">
-                                {uploadingProof === order.id ? (
-                                  <><Loader2 className="h-4 w-4 animate-spin" /> Uploading...</>
-                                ) : (
-                                  <><Upload className="h-4 w-4" /> Upload Receipt</>
-                                )}
-                              </div>
-                            </label>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    <div className="flex justify-end">
+                      {order.paymentMethod === "card" ? (
+                        <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-0 text-xs gap-1">
+                          <CreditCard className="h-3 w-3" /> Paid by card
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-0 text-xs gap-1">
+                          <Banknote className="h-3 w-3" /> Cash on Delivery
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

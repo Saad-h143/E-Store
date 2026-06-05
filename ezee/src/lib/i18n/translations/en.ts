@@ -114,6 +114,10 @@ export const en = {
     nameRequired: "Please enter your name.",
     emailInvalid: "Please enter a valid email address.",
     guestCheckoutNote: "Checking out as guest. {link} to track all your orders.",
+    paymentMethod: "Payment Method",
+    payByCard: "Card",
+    cashOnDelivery: "Cash on Delivery",
+    continueToPayment: "Continue to Payment",
   },
   // Login
   login: {

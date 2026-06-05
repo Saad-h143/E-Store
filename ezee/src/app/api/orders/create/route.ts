@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { cacheSet, CACHE_KEYS } from "@/lib/cache";
+import { stripe } from "@/lib/stripe";
 
 // Service-role client: bypasses RLS so guest orders (user_id = null) can be
 // inserted and read back. Never expose this key to the browser.
@@ -30,6 +31,8 @@ export async function POST(request: NextRequest) {
       items,
       total,
       shippingAddress,
+      paymentMethod,
+      paymentIntentId,
     } = body as {
       userId?: string | null;
       customerName?: string;
@@ -38,6 +41,8 @@ export async function POST(request: NextRequest) {
       items?: OrderItem[];
       total?: number;
       shippingAddress?: string;
+      paymentMethod?: "card" | "cod";
+      paymentIntentId?: string;
     };
 
     // --- Server-side validation (do not trust the client) ---
@@ -65,25 +70,69 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid order total" }, { status: 400 });
     }
 
+    const method: "card" | "cod" = paymentMethod === "card" ? "card" : "cod";
+
+    // For card orders, verify the payment actually succeeded with Stripe and
+    // that the amount paid matches the order total — never trust the client.
+    let paymentVerified = false;
+    if (method === "card") {
+      if (!paymentIntentId) {
+        return NextResponse.json({ error: "Missing payment reference" }, { status: 400 });
+      }
+      try {
+        const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        if (intent.status !== "succeeded") {
+          return NextResponse.json({ error: "Payment not completed" }, { status: 402 });
+        }
+        if (intent.amount_received !== Math.round(total * 100)) {
+          return NextResponse.json({ error: "Payment amount mismatch" }, { status: 400 });
+        }
+        paymentVerified = true;
+      } catch (err) {
+        console.error("[Orders/Create] Stripe verify error:", err);
+        return NextResponse.json({ error: "Could not verify payment" }, { status: 400 });
+      }
+    }
+
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}${Math.random()
       .toString(36)
       .substring(2, 5)
       .toUpperCase()}`;
 
-    const { data, error } = await supabase
+    const baseRow = {
+      order_number: orderNumber,
+      user_id: userId || null,
+      customer_name: name,
+      customer_email: email,
+      customer_phone: phone,
+      items,
+      total,
+      shipping_address: address,
+    };
+    const paymentRow = {
+      payment_method: method,
+      payment_intent_id: method === "card" ? paymentIntentId : null,
+      payment_verified: paymentVerified,
+    };
+
+    let { data, error } = await supabase
       .from("orders")
-      .insert({
-        order_number: orderNumber,
-        user_id: userId || null,
-        customer_name: name,
-        customer_email: email,
-        customer_phone: phone,
-        items,
-        total,
-        shipping_address: address,
-      })
+      .insert({ ...baseRow, ...paymentRow })
       .select()
       .single();
+
+    // Safety net: if the payment columns haven't been migrated yet, don't lose a
+    // successful charge — retry without them. (Run stripe_payments.sql to fix.)
+    if (error && /payment_method|payment_intent_id|payment_verified/i.test(error.message || "")) {
+      console.warn(
+        "[Orders/Create] Payment columns missing — run stripe_payments.sql. Saving order without them."
+      );
+      ({ data, error } = await supabase
+        .from("orders")
+        .insert(baseRow)
+        .select()
+        .single());
+    }
 
     if (error) {
       console.error("[Orders/Create] Insert error:", error);

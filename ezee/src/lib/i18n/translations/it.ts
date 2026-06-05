@@ -110,6 +110,10 @@ export const it = {
     nameRequired: "Inserisci il tuo nome.",
     emailInvalid: "Inserisci un indirizzo email valido.",
     guestCheckoutNote: "Acquisto come ospite. {link} per tracciare tutti i tuoi ordini.",
+    paymentMethod: "Metodo di pagamento",
+    payByCard: "Carta",
+    cashOnDelivery: "Contrassegno",
+    continueToPayment: "Continua al pagamento",
   },
   login: {
     welcomeBack: "Bentornato",

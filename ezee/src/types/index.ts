@@ -69,6 +69,8 @@ export interface Order {
   shippingAddress: string;
   paymentProof?: string;
   paymentVerified?: boolean;
+  paymentMethod?: "card" | "cod";
+  paymentIntentId?: string;
   createdAt: string;
 }
 
