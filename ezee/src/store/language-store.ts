@@ -46,6 +46,10 @@ export const useLanguageStore = create<LanguageState>()(
     }),
     {
       name: "ezee-language",
+      // Don't rehydrate during render — the server renders the default locale,
+      // so we must keep the first client render identical (default) to avoid a
+      // hydration mismatch, then rehydrate after mount (see Providers).
+      skipHydration: true,
       partialize: (state) => ({ locale: state.locale }),
       merge: (persisted, current) => {
         const p = persisted as { locale?: Locale } | undefined;

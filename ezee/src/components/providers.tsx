@@ -8,6 +8,9 @@ import { useLanguageStore } from "@/store/language-store";
 function LanguageDetector() {
   const detectLanguage = useLanguageStore((s) => s.detectLanguage);
   useEffect(() => {
+    // Load the saved locale after mount (store uses skipHydration to avoid a
+    // server/client hydration mismatch), then run auto-detection.
+    useLanguageStore.persist.rehydrate();
     detectLanguage();
   }, [detectLanguage]);
   return null;
