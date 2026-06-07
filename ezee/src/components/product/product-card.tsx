@@ -55,6 +55,7 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
                 isOutOfStock && "opacity-50 grayscale"
               )}
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              loading="lazy"
             />
 
             {/* Badges */}

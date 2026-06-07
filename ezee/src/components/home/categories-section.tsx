@@ -39,6 +39,7 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-110"
                     sizes="80px"
+                    loading="lazy"
                   />
                 ) : (
                   <span className="text-2xl font-bold text-muted-foreground">

@@ -1,4 +1,5 @@
 import { createClient } from "./client";
+import { compressImage } from "@/lib/image-utils";
 import type { Product, Category, Subcategory, BannerSlide, Order, UserProfile } from "@/types";
 import {
   cacheGet, cacheSet, cacheInvalidateProducts, cacheInvalidateCategories,
@@ -784,8 +785,11 @@ export async function uploadImage(file: File, folder: string = "products"): Prom
     throw new Error("Cloudinary is not configured (missing cloud name or upload preset).");
   }
 
+  // Shrink large images in the browser first for a much faster upload.
+  const optimized = await compressImage(file);
+
   const form = new FormData();
-  form.append("file", file);
+  form.append("file", optimized);
   form.append("upload_preset", preset);
   form.append("folder", `ezee/${folder}`);
 

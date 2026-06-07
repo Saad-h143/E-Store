@@ -75,8 +75,9 @@ export default function AdminBannersPage() {
         setEditBanner({ ...editBanner, image: url });
       }
       toast.success("Image uploaded!");
-    } catch {
-      toast.error("Failed to upload image");
+    } catch (err) {
+      console.error("[Banner image upload]", err);
+      toast.error(err instanceof Error ? err.message : "Failed to upload image");
     }
     setUploadingImage(false);
     if (fileInputRef.current) fileInputRef.current.value = "";

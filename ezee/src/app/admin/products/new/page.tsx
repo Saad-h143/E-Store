@@ -113,8 +113,8 @@ function NewProductContent() {
       setImages((prev) => [...prev, ...uploaded]);
       toast.success(`${uploaded.length} image(s) uploaded!`);
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to upload image. Make sure you are logged in as admin.");
+      console.error("[Product image upload]", err);
+      toast.error(err instanceof Error ? err.message : "Failed to upload image");
     }
     setUploadingImage(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
