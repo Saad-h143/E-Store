@@ -55,6 +55,7 @@ export default function AdminOrdersPage() {
   const ITEMS_PER_PAGE = 10;
   const [orderList, setOrderList] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [proofPreview, setProofPreview] = useState<string | null>(null);
   const [pendingStatus, setPendingStatus] = useState<{
     orderId: string;
     orderNumber: string;
@@ -373,18 +374,18 @@ export default function AdminOrdersPage() {
                             <p className="text-sm font-semibold mb-2">Payment Proof</p>
                             {order.paymentProof ? (
                               <div className="space-y-3">
-                                <a
-                                  href={order.paymentProof}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block rounded-xl overflow-hidden border hover:border-primary/50 transition-colors"
+                                <button
+                                  type="button"
+                                  onClick={() => setProofPreview(order.paymentProof || null)}
+                                  className="block w-full rounded-xl overflow-hidden border hover:border-primary/50 transition-colors cursor-zoom-in"
                                 >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img
                                     src={order.paymentProof}
                                     alt="Payment proof"
                                     className="w-full max-h-[200px] object-contain bg-muted"
                                   />
-                                </a>
+                                </button>
                                 <div className="flex gap-2">
                                   {order.paymentVerified ? (
                                     <div className="flex items-center gap-2 text-sm text-emerald-600 bg-emerald-500/10 rounded-lg px-3 py-2 flex-1">
@@ -483,6 +484,23 @@ export default function AdminOrdersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Payment proof lightbox — opens in-page instead of a new tab */}
+      <Dialog open={!!proofPreview} onOpenChange={(open) => !open && setProofPreview(null)}>
+        <DialogContent className="max-w-3xl p-3">
+          <DialogHeader className="px-1">
+            <DialogTitle>Payment Proof</DialogTitle>
+          </DialogHeader>
+          {proofPreview && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={proofPreview}
+              alt="Payment proof"
+              className="w-full max-h-[80vh] object-contain rounded-lg bg-muted"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

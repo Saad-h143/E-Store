@@ -393,9 +393,9 @@ export function Navbar() {
                     </SheetTitle>
                   </SheetHeader>
 
-                  {/* User info at top of mobile menu */}
+                  {/* User info + My Orders at top of mobile menu */}
                   {isAuthenticated && user && (
-                    <div className="px-5 py-4 border-b border-border/50">
+                    <div className="px-5 py-4 border-b border-border/50 space-y-3">
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-purple-600 text-white text-sm font-bold shadow-sm">
                           {user.name.charAt(0).toUpperCase()}
@@ -405,6 +405,13 @@ export function Navbar() {
                           <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                         </div>
                       </div>
+                      <Link
+                        href="/account#orders"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium bg-accent/50 hover:bg-accent text-foreground transition-colors"
+                      >
+                        <Package className="h-4 w-4" /> My Orders
+                      </Link>
                     </div>
                   )}
 

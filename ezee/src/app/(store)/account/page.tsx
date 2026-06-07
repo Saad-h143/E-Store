@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/store/auth-store";
 import { getUserOrders } from "@/lib/supabase/queries";
+import { cacheGet, cacheSet } from "@/lib/cache";
 import { PaymentDetailsDialog } from "@/components/common/payment-details";
 import { formatPrice } from "@/store/cart-store";
 import Link from "next/link";
@@ -65,18 +66,30 @@ export default function AccountPage() {
   };
 
   useEffect(() => {
-    async function loadOrders() {
-      if (user) {
-        const data = await getUserOrders();
-        setUserOrders(data);
-      }
+    if (!user) {
+      setOrdersLoading(false);
+      return;
+    }
+    const cacheKey = `orders:mine:${user.id}`;
+
+    // Show cached orders instantly (persisted across refreshes), then refresh.
+    const cached = cacheGet<Order[]>(cacheKey);
+    if (cached) {
+      setUserOrders(cached);
       setOrdersLoading(false);
     }
-    loadOrders();
+
+    const refresh = () =>
+      getUserOrders().then((data) => {
+        setUserOrders(data);
+        cacheSet(cacheKey, data, 5 * 60 * 1000);
+        setOrdersLoading(false);
+      });
+
+    refresh();
     // Refresh on tab focus to get latest status
-    const handleFocus = () => { if (user) getUserOrders().then(setUserOrders); };
-    window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
   }, [user]);
 
   if (!isAuthenticated || !user) {
@@ -165,7 +178,13 @@ export default function AccountPage() {
               <h2 className="text-lg font-bold">{t.account.myOrders}</h2>
             </div>
 
-            {userOrders.length === 0 ? (
+            {ordersLoading && userOrders.length === 0 ? (
+              <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-28 w-full rounded-xl" />
+                ))}
+              </div>
+            ) : userOrders.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <Package className="h-12 w-12 mx-auto mb-3 opacity-30" />
                 <p>{t.account.noOrders}</p>
