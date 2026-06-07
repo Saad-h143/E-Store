@@ -234,7 +234,7 @@ export function Navbar() {
             </nav>
 
             {/* Right Side Actions */}
-            <div className="flex items-center gap-0">
+            <div className="flex items-center gap-0.5 md:gap-1">
               {/* Search - desktop only */}
               <Button
                 variant="ghost"
@@ -323,7 +323,7 @@ export function Navbar() {
               {isAuthenticated && user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="hidden md:inline-flex h-9 w-9 rounded-xl cursor-pointer hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-primary/50">
+                    <Button variant="ghost" size="icon" className="hidden md:inline-flex h-9 w-9 rounded-xl cursor-pointer hover:bg-accent/60 focus-visible:ring-2 focus-visible:ring-primary/50 ml-1">
                       <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-primary to-purple-600 text-white text-xs font-bold ring-2 ring-background shadow-sm">
                         {user.name.charAt(0).toUpperCase()}
                       </div>
