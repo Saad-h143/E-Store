@@ -9,20 +9,46 @@ const dmSans = DM_Sans({
   weight: ["400", "500", "600", "700"],
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ezeeparts.online";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Ezee — Premium Mobile Store",
-    template: "%s | Ezee",
+    default: "Ezee Parts — Wholesale iPhone LCD, OLED Screens & Mobile Parts",
+    template: "%s | Ezee Parts",
   },
   description:
-    "Your trusted destination for premium smartphones. Shop the latest iPhones, Samsung Galaxy, Google Pixel, and more at the best prices.",
-  keywords: ["mobile store", "smartphones", "iPhone", "Samsung", "buy phone online", "Ezee"],
+    "Ezee Parts (ezeeparts.online) — wholesale prices on authentic iPhone LCD & OLED screens, batteries and mobile spare parts. 100% genuine stock, tested before dispatch, fast shipping across Europe.",
+  keywords: [
+    "ezeeparts",
+    "ezee parts",
+    "iPhone LCD",
+    "iPhone OLED screen",
+    "phone screen replacement",
+    "mobile spare parts",
+    "wholesale phone parts",
+    "iPhone screen wholesale",
+    "phone parts Europe",
+  ],
+  applicationName: "Ezee Parts",
+  alternates: { canonical: "/" },
   openGraph: {
-    title: "Ezee — Premium Mobile Store",
-    description: "Shop the latest smartphones at the best prices.",
+    title: "Ezee Parts — Wholesale iPhone & Mobile Parts",
+    description:
+      "Authentic iPhone LCD/OLED screens, batteries & mobile parts at wholesale prices. Fast EU shipping.",
+    url: SITE_URL,
     type: "website",
-    locale: "en_IN",
-    siteName: "Ezee",
+    siteName: "Ezee Parts",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Ezee Parts — Wholesale iPhone & Mobile Parts",
+    description: "Authentic iPhone screens, batteries & mobile parts at wholesale prices.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
   },
 };
 

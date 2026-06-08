@@ -18,39 +18,44 @@ export function CategoriesSection({ categories }: CategoriesSectionProps) {
         subtitle="Find your perfect phone from top brands"
         href="/shop"
       />
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
         {categories.map((category, index) => (
           <motion.div
             key={category.id}
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.3, delay: index * 0.05 }}
           >
             <Link
               href={`/shop?category=${category.slug}`}
-              className="group relative flex flex-col items-center justify-center gap-3 rounded-2xl border bg-card p-6 transition-all hover:bg-card/80 hover:backdrop-blur-xl hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1 hover:border-primary/30 cursor-pointer"
+              className="group block overflow-hidden rounded-2xl border bg-card cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10 hover:border-primary/30"
             >
-              <div className="relative h-20 w-20 rounded-xl overflow-hidden bg-gradient-to-br from-muted/50 to-muted flex items-center justify-center">
+              {/* Logo / image — contained on a light tile so the whole logo shows */}
+              <div className="relative aspect-[4/3] flex items-center justify-center bg-gradient-to-br from-muted/40 to-muted p-4">
                 {category.image ? (
                   <Image
                     src={category.image}
                     alt={category.name}
                     fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-110"
-                    sizes="80px"
+                    className="object-contain p-4 transition-transform duration-300 group-hover:scale-105"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 16vw"
                     loading="lazy"
                   />
                 ) : (
-                  <span className="text-2xl font-bold text-muted-foreground">
+                  <span className="text-3xl font-bold text-muted-foreground">
                     {category.name.charAt(0).toUpperCase()}
                   </span>
                 )}
               </div>
-              <div className="text-center">
-                <h3 className="font-semibold text-sm">{category.name}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {category.productCount} products
+
+              {/* Name + count */}
+              <div className="p-2.5 text-center">
+                <h3 className="text-xs sm:text-sm font-semibold line-clamp-1">
+                  {category.name}
+                </h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {category.productCount} {category.productCount === 1 ? "product" : "products"}
                 </p>
               </div>
             </Link>

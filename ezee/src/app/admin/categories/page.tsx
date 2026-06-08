@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Plus, Edit, Trash2, FolderTree, Loader2, Upload } from "lucide-react";
+import { Plus, Edit, Trash2, FolderTree, Loader2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,6 +38,9 @@ export default function AdminCategoriesPage() {
   const [saving, setSaving] = useState(false);
   const [editCategory, setEditCategory] = useState<Category | null>(null);
   const [newCategory, setNewCategory] = useState({ name: "", description: "", image: "" });
+  // Optional subcategories entered while creating a new category
+  const [newCatSubs, setNewCatSubs] = useState<string[]>([]);
+  const [subDraft, setSubDraft] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -96,6 +99,20 @@ export default function AdminCategoriesPage() {
     if (editFileInputRef.current) editFileInputRef.current.value = "";
   };
 
+  const slugify = (s: string) =>
+    s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+  const addSubDraft = () => {
+    const name = subDraft.trim();
+    if (!name) return;
+    if (newCatSubs.some((s) => s.toLowerCase() === name.toLowerCase())) {
+      setSubDraft("");
+      return;
+    }
+    setNewCatSubs((prev) => [...prev, name]);
+    setSubDraft("");
+  };
+
   const handleAdd = async () => {
     if (!newCategory.name) {
       toast.error("Please enter a category name");
@@ -103,20 +120,43 @@ export default function AdminCategoriesPage() {
     }
     setSaving(true);
     try {
-      const slug = newCategory.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "");
       const cat = await createCategory({
         name: newCategory.name,
-        slug,
+        slug: slugify(newCategory.name),
         description: newCategory.description,
         image: newCategory.image || "",
       });
+
+      // Optionally create the subcategories entered in the same modal.
+      const createdSubs: Subcategory[] = [];
+      for (const subName of newCatSubs) {
+        try {
+          const sub = await createSubcategory({
+            categoryId: cat.id,
+            name: subName,
+            slug: slugify(subName),
+            description: "",
+            image: "",
+          });
+          createdSubs.push(sub);
+        } catch {
+          // Skip a failed subcategory but keep the category.
+        }
+      }
+
       setCategoryList((prev) => [...prev, cat]);
+      if (createdSubs.length) {
+        setSubcategoriesMap((prev) => ({ ...prev, [cat.id]: createdSubs }));
+      }
       setNewCategory({ name: "", description: "", image: "" });
+      setNewCatSubs([]);
+      setSubDraft("");
       setAddOpen(false);
-      toast.success("Category added");
+      toast.success(
+        createdSubs.length
+          ? `Category added with ${createdSubs.length} subcategor${createdSubs.length === 1 ? "y" : "ies"}`
+          : "Category added"
+      );
     } catch {
       toast.error("Failed to create category");
     }
@@ -251,7 +291,16 @@ export default function AdminCategoriesPage() {
             Manage product categories and brands
           </p>
         </div>
-        <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <Dialog
+          open={addOpen}
+          onOpenChange={(o) => {
+            setAddOpen(o);
+            if (!o) {
+              setNewCatSubs([]);
+              setSubDraft("");
+            }
+          }}
+        >
           <DialogTrigger asChild>
             <Button className="rounded-xl bg-gradient-to-r from-primary to-purple-600 hover:opacity-90 text-white">
               <Plus className="h-4 w-4 mr-2" />
@@ -308,9 +357,61 @@ export default function AdminCategoriesPage() {
                   </Button>
                 </div>
               </div>
+
+              {/* Optional subcategories */}
+              <div className="space-y-2">
+                <Label>
+                  Subcategories{" "}
+                  <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={subDraft}
+                    onChange={(e) => setSubDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addSubDraft();
+                      }
+                    }}
+                    placeholder="e.g., LCD, Battery — press Enter to add"
+                    className="rounded-xl flex-1"
+                  />
+                  <Button type="button" variant="outline" className="rounded-xl" onClick={addSubDraft}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                {newCatSubs.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {newCatSubs.map((s, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1 rounded-lg bg-accent px-2.5 py-1 text-xs font-medium"
+                      >
+                        {s}
+                        <button
+                          type="button"
+                          onClick={() => setNewCatSubs((prev) => prev.filter((_, idx) => idx !== i))}
+                          className="text-muted-foreground hover:text-destructive cursor-pointer"
+                          aria-label={`Remove ${s}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setAddOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setAddOpen(false);
+                  setNewCatSubs([]);
+                  setSubDraft("");
+                }}
+              >
                 Cancel
               </Button>
               <Button onClick={handleAdd} disabled={saving}>
@@ -332,13 +433,13 @@ export default function AdminCategoriesPage() {
             transition={{ delay: index * 0.05 }}
             className="rounded-2xl border bg-card/80 backdrop-blur-xl overflow-hidden hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
           >
-            <div className="relative h-32 bg-muted group/image overflow-hidden">
+            <div className="relative h-32 bg-gradient-to-br from-muted/40 to-muted group/image overflow-hidden">
               {category.image ? (
                 <Image
                   src={category.image}
                   alt={category.name}
                   fill
-                  className="object-cover group-hover/image:scale-105 transition-transform duration-300"
+                  className="object-contain p-4 group-hover/image:scale-105 transition-transform duration-300"
                   sizes="(max-width: 640px) 100vw, 33vw"
                 />
               ) : (
