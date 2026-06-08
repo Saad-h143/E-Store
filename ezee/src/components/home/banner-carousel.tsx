@@ -6,7 +6,6 @@ import Autoplay from "embla-carousel-autoplay";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BannerSlide } from "@/types";
 import { cn } from "@/lib/utils";
@@ -21,8 +20,6 @@ export function BannerCarousel({ slides }: BannerCarouselProps) {
   ]);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
-  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
   const scrollTo = useCallback((index: number) => emblaApi?.scrollTo(index), [emblaApi]);
 
   useEffect(() => {
@@ -127,26 +124,6 @@ export function BannerCarousel({ slides }: BannerCarouselProps) {
           ))}
         </div>
       </div>
-
-      {/* Navigation Arrows */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/25 opacity-70 hover:opacity-100 transition-all duration-300 focus-visible:ring-2 focus-visible:ring-white/50"
-        onClick={scrollPrev}
-        aria-label="Previous slide"
-      >
-        <ChevronLeft className="h-5 w-5" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 text-white hover:bg-white/25 opacity-70 hover:opacity-100 transition-all duration-300 focus-visible:ring-2 focus-visible:ring-white/50"
-        onClick={scrollNext}
-        aria-label="Next slide"
-      >
-        <ChevronRight className="h-5 w-5" />
-      </Button>
 
       {/* Dots */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/20 backdrop-blur-xl rounded-full px-3 py-2 border border-white/10">
