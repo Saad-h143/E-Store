@@ -67,6 +67,7 @@ export function Footer() {
                 (e.target as HTMLFormElement).reset();
               }}
               className="flex flex-col sm:flex-row w-full max-w-md gap-2"
+              suppressHydrationWarning
             >
               <Input
                 type="email"
