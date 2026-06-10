@@ -35,10 +35,13 @@ const cut = await sharp(rgba, { raw: { width: info.width, height: info.height, c
   .trim()
   .toBuffer();
 
+// White background behind the monogram so it's visible on dark browser tabs
+// and in Google's (circular) favicon.
 const make = () =>
   sharp(cut)
-    .resize(440, 440, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
-    .extend({ top: 36, bottom: 36, left: 36, right: 36, background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .resize(400, 400, { fit: "contain", background: "#ffffff" })
+    .extend({ top: 56, bottom: 56, left: 56, right: 56, background: "#ffffff" })
+    .flatten({ background: "#ffffff" })
     .png();
 
 await make().toFile("public/logo-icon.png");
